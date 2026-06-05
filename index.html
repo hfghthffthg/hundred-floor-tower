@@ -243,26 +243,168 @@ function render() {
     return;
   }
   
-  // 正常楼层——生成ABCD选项
-  var choices = [
-    {label: 'A. 一道金光闪过', type: 'reward'},
-    {label: 'B. 远处传来叫卖声', type: 'shop'},
-    {label: 'C. 一阵腥风扑面', type: 'danger'},
-    {label: P.floor < 60 && Math.random() < 0.25 ? 'D. 窗外有藤蔓垂落' : 'D. 一扇紧闭的铁门', type: P.floor < 60 && Math.random() < 0.25 ? 'outside' : 'mystery'}
-  ];
-  P.choicesStore = choices;
+  // 正常楼层——从事件池生成选项
+  var events = getEvents();
+  P.choicesStore = events;
   ch.innerHTML = '';
-  for (var i = 0; i < choices.length; i++) {
+  for (var i = 0; i < events.length; i++) {
     var btn = document.createElement('button');
     btn.className = 'choice-btn';
-    btn.innerHTML = '<span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + choices[i].label.split('. ')[1];
-    btn.onclick = (function(idx) { return function() { doChoice(P.choicesStore[idx]); }; })(i);
+    btn.innerHTML = '<span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + events[i].label;
+    btn.onclick = (function(idx) { return function() { doEvent(P.choicesStore[idx]); }; })(i);
     ch.appendChild(btn);
   }
 }
 
+// ─── 事件池 ───
+var EVENTS_BY_TIER = {
+  tier1: [
+    {label: '一只骷髅兵拦住了去路！', type: 'monster'},
+    {label: '你发现了一个破旧的宝箱', type: 'treasure'},
+    {label: '地上散落着几枚金币', type: 'gold'},
+    {label: '你找到了一小瓶恢复药水', type: 'heal'},
+    {label: '触发了一个毒箭陷阱！', type: 'trap'},
+    {label: '这层空空荡荡，什么也没有', type: 'nothing'},
+    {label: '一座古老的祭坛散发着微光', type: 'altar'},
+    {label: '一张命运卡牌悬浮在空中', type: 'card'},
+    {label: '角落里藏着一个木箱', type: 'treasure'},
+    {label: '你在墙缝里发现了一些金币', type: 'gold'},
+  ],
+  tier2: [
+    {label: '石像鬼发出一声嘶吼冲了过来！', type: 'monster'},
+    {label: '一个银色的宝箱被锁链缠绕', type: 'treasure'},
+    {label: '一堆金币散落在角落', type: 'gold'},
+    {label: '一瓶泛着荧光的恢复药', type: 'heal'},
+    {label: '地面突然塌陷！', type: 'trap'},
+    {label: '一个流浪商人在这里歇脚', type: 'shop'},
+    {label: '滚石从上方砸下！', type: 'trap'},
+    {label: '一座远古祭坛浮现出来', type: 'altar'},
+    {label: '命运卡牌翻转在空中', type: 'card'},
+    {label: '墙上的暗格里塞着一个宝箱', type: 'treasure'},
+  ],
+  tier3: [
+    {label: '怨灵从阴影中缓缓现身', type: 'monster'},
+    {label: '黄金宝箱散发着诱人的光芒', type: 'treasure'},
+    {label: '成堆的金币铺满地面', type: 'gold'},
+    {label: '一瓶强效恢复药剂', type: 'heal'},
+    {label: '魔法符文闪烁！', type: 'trap'},
+    {label: '一个神秘商人向你招呼', type: 'shop'},
+    {label: '黑暗能量吞噬了你', type: 'trap'},
+    {label: '一座被诅咒的祭坛', type: 'altar'},
+    {label: '命运之轮在转动', type: 'card'},
+    {label: '墙壁上有一道暗门...', type: 'hidden'},
+  ],
+  tier4: [
+    {label: '奇美拉从虚空中撕裂而出！', type: 'monster'},
+    {label: '传说级的宝箱被藤蔓包裹', type: 'treasure'},
+    {label: '一座小金山！', type: 'gold'},
+    {label: '一瓶散发着金光的圣药', type: 'heal'},
+    {label: '时空裂缝在身边裂开！', type: 'trap'},
+    {label: '一个半透明的商人凭空出现', type: 'shop'},
+    {label: '深渊的低语撕扯灵魂', type: 'trap'},
+    {label: '一座散发着邪气的祭坛', type: 'altar'},
+    {label: '命运在此刻凝结', type: 'card'},
+    {label: '空气中有一道裂缝...', type: 'hidden'},
+  ],
+  tier5: [
+    {label: '骨龙幼崽——深渊的守卫出现了！', type: 'monster'},
+    {label: '神话级宝箱在黑暗中发光', type: 'treasure'},
+    {label: '满地都是闪闪发光的金币', type: 'gold'},
+    {label: '远古神殿的圣水', type: 'heal'},
+    {label: '空间崩坏！', type: 'trap'},
+    {label: '因果律武器启动！', type: 'trap'},
+    {label: '绝对的虚无笼罩着你', type: 'nothing'},
+    {label: '黑暗祭坛呼唤着你', type: 'altar'},
+    {label: '命运在此交错', type: 'card'},
+    {label: '空间扭曲中藏着一道门...', type: 'hidden'},
+  ]
+};
+
+function getEvents() {
+  var tierKey = P.floor < 20 ? 'tier1' : P.floor < 40 ? 'tier2' : P.floor < 60 ? 'tier3' : P.floor < 90 ? 'tier4' : 'tier5';
+  var pool = EVENTS_BY_TIER[tierKey];
+  // 随机打乱取4个
+  var shuffled = [];
+  var copy = pool.slice();
+  while (shuffled.length < 4 && copy.length > 0) {
+    var idx = Math.floor(Math.random() * copy.length);
+    shuffled.push(copy[idx]);
+    copy.splice(idx, 1);
+  }
+  return shuffled;
+}
+
 // ─── 选项处理 ───
-function doChoice(c) {
+function doEvent(e) {
+  P.log = [];
+  switch(e.type) {
+    case 'monster':
+      var m = getMon();
+      P.log = fight(m);
+      break;
+    case 'treasure':
+      var g = rnd(10 + P.floor, 30 + P.floor*2);
+      P.gold += g;
+      P.log = ['打开宝箱，获得了' + g + '金币！'];
+      break;
+    case 'gold':
+      var g = rnd(5 + P.floor, 20 + P.floor*2);
+      P.gold += g;
+      P.log = ['获得了' + g + '金币！'];
+      break;
+    case 'heal':
+      var h = rnd(2, 5 + Math.floor(P.floor/10));
+      P.hp = Math.min(P.maxHp, P.hp + h);
+      P.log = ['恢复了' + h + '点生命！'];
+      break;
+    case 'trap':
+      var d = rnd(2, 6 + Math.floor(P.floor/10));
+      P.hp -= d;
+      P.log = ['陷阱！受到' + d + '点伤害'];
+      break;
+    case 'nothing':
+      P.log = ['这里什么都没有...'];
+      break;
+    case 'altar':
+      P.log = ['祭坛的力量涌入了你的身体...攻击+1！'];
+      P.atk += 1;
+      break;
+    case 'card':
+      var roll = Math.random();
+      if (roll > 0.5) { P.atk += 2; P.log = ['命运卡牌正位：攻击+2！']; }
+      else { P.hp -= 1; P.log = ['命运卡牌逆位：生命-1']; }
+      break;
+    case 'shop':
+      var tier = P.floor < 30 ? 1 : P.floor < 60 ? 2 : P.floor < 90 ? 3 : 4;
+      P.shopItems = [
+        {name: '生命药水', cost: 10 + tier*5, desc: '恢复' + (3+tier*2) + '生命', effect: 'heal'},
+        {name: '攻击卷轴', cost: 15 + tier*5, desc: '攻击+' + (1+tier), effect: 'atk'},
+        {name: '护盾符文', cost: 12 + tier*5, desc: '生命上限+' + (2+tier*2), effect: 'maxHp'}
+      ];
+      P.showingShop = true;
+      render();
+      return;
+    case 'hidden':
+      var hr = Math.random();
+      if (hr < 0.5) { P.gold += 30; P.log = ['隐藏房间里堆满了金币！']; }
+      else if (hr < 0.8) { P.atk += 2; P.log = ['隐藏的力量强化了你的攻击！攻击+2']; }
+      else { P.hp += 5; P.log = ['隐藏的圣光治愈了你！生命+5']; }
+      break;
+    default:
+      P.log = ['一个未知的事件...'];
+  }
+
+  // 检查特殊楼层
+  checkSpecial();
+  if (P.showingMaze || P.showingRiddle || P.showingFakeEnd) { render(); return; }
+
+  P.floor++;
+  if (P.hp <= 0) { P.deaths++; }
+  render();
+}
+
+// ─── 旧doChoice保留兼容 ───
+function doChoice(c) { doEvent(c); }
   P.log = [];
   switch(c.type) {
     case 'reward':
