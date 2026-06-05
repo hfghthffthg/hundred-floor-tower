@@ -405,33 +405,7 @@ function doEvent(e) {
 
 // ─── 旧doChoice保留兼容 ───
 function doChoice(c) { doEvent(c); }
-  
-  // 塔外处理
-  if (P.towerOutside) {
-    P.outsideSteps++;
-    if (P.outsideSteps >= P.outsideMax) {
-      P.towerOutside = false;
-      P.floor += P.outsideSteps;
-      P.log.push('你找到了入口，回到了塔内！');
-    } else {
-      // 简化的塔外事件
-      var oevts = ['你爬过了一段藤蔓...', '一只蝙蝠飞过，你抓紧了墙壁', '墙缝里发现了几枚金币', '一阵暖风送来了一朵发光的花', '手指被石头划破，流了点血'];
-      P.log = [pick(oevts)];
-      render();
-      return;
-    }
-  }
-  
-  // 检查特殊楼层
-  checkSpecial();
-  if (P.showingMaze || P.showingRiddle || P.showingFakeEnd) { render(); return; }
-  
-  P.floor++;
-  if (P.hp <= 0) { P.deaths++; }
-  render();
-}
 
-// ─── 小怪生成 ───
 function getMon() {
   var mons = [
     {name:'骷髅兵', hp:2, atk:1, gold:8},
