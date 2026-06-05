@@ -1033,9 +1033,13 @@ function handleChoice(choice, index) {
 }
 
 // ─── 页面初始化 ───
-window.addEventListener('DOMContentLoaded', function() {
-  console.log('[百层塔] 页面加载完成，初始化游戏...');
-  startNewGame();
-});
+(function initWhenReady() {
+  if (document.getElementById('choices')) {
+    console.log('[百层塔] DOM就绪，初始化游戏...');
+    startNewGame();
+  } else {
+    setTimeout(initWhenReady, 100);
+  }
+})();
 
 console.log('[百层塔] 修复补丁加载完成——renderGame + 页面初始化就绪');
