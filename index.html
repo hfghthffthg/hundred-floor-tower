@@ -251,7 +251,7 @@ function render() {
   ];
   var htm = '';
   for (var i = 0; i < choices.length; i++) {
-    htm += '<button class="choice-btn" onclick="doChoice('' + JSON.stringify(choices[i]).replace(/"/g, '&quot;') + '')"><span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + choices[i].label.split('. ')[1] + '</button>';
+    htm += '<button class="choice-btn" onclick="doChoice(' + JSON.stringify(choices[i]).replace(/"/g, '&quot;') + ')"><span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + choices[i].label.split('. ')[1] + '</button>';
   }
   ch.innerHTML = htm;
 }
