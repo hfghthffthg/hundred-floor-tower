@@ -25,20 +25,29 @@ let player = {
 
 // ─── 渲染函数 ───
 function updateStatus() {
-  document.getElementById('hp').textContent = player.hp + '/' + player.maxHp;
-  document.getElementById('atk').textContent = player.atk;
-  document.getElementById('gold').textContent = player.gold;
-  document.getElementById('bless').textContent = player.blessing || '无';
-  document.getElementById('curse').textContent = player.curse || '无';
+  var hpEl = document.getElementById('hp');
+  var atkEl = document.getElementById('atk');
+  var goldEl = document.getElementById('gold');
+  var blessEl = document.getElementById('bless');
+  var curseEl = document.getElementById('curse');
+  if (!hpEl || !atkEl || !goldEl) return;
+  hpEl.textContent = player.hp + '/' + player.maxHp;
+  atkEl.textContent = player.atk;
+  goldEl.textContent = player.gold;
+  if (blessEl) blessEl.textContent = player.blessing || '无';
+  if (curseEl) curseEl.textContent = player.curse || '无';
 }
 
 function setFloorDisplay() {
+  var floorDisp = document.getElementById('floor-display');
+  var floorName = document.getElementById('floor-name');
+  if (!floorDisp || !floorName) return;
   if (player.towerOutside) {
-    document.getElementById('floor-display').textContent = '塔外 · ???';
-    document.getElementById('floor-name').textContent = '（你在塔的外壁上，不知道到了第几层）';
+    floorDisp.textContent = '塔外 · ???';
+    floorName.textContent = '（你在塔的外壁上，不知道到了第几层）';
   } else {
-    document.getElementById('floor-display').textContent = '第 ' + player.floor + ' 层';
-    let name = '';
+    floorDisp.textContent = '第 ' + player.floor + ' 层';
+    var name = '';
     if (player.floor === 25) name = '· BOSS层';
     else if (player.floor === 50) name = '· BOSS层';
     else if (player.floor === 75) name = '· BOSS层';
@@ -49,24 +58,25 @@ function setFloorDisplay() {
     else if (player.floor === 99) name = '· 知识之间';
     else if (player.floor === 100) name = '· 魔王之间';
     else if (player.floor === 101) name = '· 真·魔王之间';
-    document.getElementById('floor-name').textContent = name;
+    floorName.textContent = name;
   }
 }
 
 function showNarrative(text) {
-  document.getElementById('narrative').textContent = text;
-  document.getElementById('narrative').scrollTop = 0;
+  var el = document.getElementById('narrative');
+  if (!el) return;
+  el.textContent = text;
+  el.scrollTop = 0;
 }
 
 function showChoices(choices) {
   const container = document.getElementById('choices');
-  if (!container) { console.error('[百层塔] choices容器不存在！'); return; }
   container.innerHTML = '';
   choices.forEach((c, i) => {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
     btn.innerHTML = '<span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + c.label;
-    btn.setAttribute('onclick', 'processChoice(' + i + ')');
+    btn.addEventListener('click', () => handleChoice(c, i));
     container.appendChild(btn);
   });
 }
@@ -952,7 +962,6 @@ console.log('[百层塔] 第三批加载完成——游戏引擎就绪');
 
 // ─── 核心渲染函数 ───
 function renderGame(msg, gameOver) {
-  try {
   updateStatus();
   setFloorDisplay();
   addBackpackButton();
@@ -1024,8 +1033,6 @@ function renderGame(msg, gameOver) {
   let choices = getFloorChoices(player.floor);
   showChoices(choices);
 }
-  } catch(e) { console.error("[百层塔] renderGame异常:", e); showNarrative("出错了...请刷新页面重试"); }
-
 
 // ─── 处理选项点击 ───
 function handleChoice(choice, index) {
@@ -1033,13 +1040,9 @@ function handleChoice(choice, index) {
 }
 
 // ─── 页面初始化 ───
-(function initWhenReady() {
-  if (document.getElementById('choices')) {
-    console.log('[百层塔] DOM就绪，初始化游戏...');
-    startNewGame();
-  } else {
-    setTimeout(initWhenReady, 100);
-  }
-})();
+window.addEventListener('DOMContentLoaded', function() {
+  console.log('[百层塔] 页面加载完成，初始化游戏...');
+  startNewGame();
+});
 
 console.log('[百层塔] 修复补丁加载完成——renderGame + 页面初始化就绪');
