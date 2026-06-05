@@ -160,6 +160,7 @@ body {
 
 // ─── 核心状态 ───
 var P = {
+  choicesStore: [],
   floor: 1, hp: 5, maxHp: 5, atk: 1, gold: 0,
   treasures: [], log: [],
   towerOutside: false, outsideSteps: 0, outsideMax: 0,
@@ -249,11 +250,15 @@ function render() {
     {label: 'C. 一阵腥风扑面', type: 'danger'},
     {label: P.floor < 60 && Math.random() < 0.25 ? 'D. 窗外有藤蔓垂落' : 'D. 一扇紧闭的铁门', type: P.floor < 60 && Math.random() < 0.25 ? 'outside' : 'mystery'}
   ];
-  var htm = '';
+  P.choicesStore = choices;
+  ch.innerHTML = '';
   for (var i = 0; i < choices.length; i++) {
-    htm += '<button class="choice-btn" onclick="doChoice(' + JSON.stringify(choices[i]).replace(/"/g, '&quot;') + ')"><span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + choices[i].label.split('. ')[1] + '</button>';
+    var btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = '<span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + choices[i].label.split('. ')[1];
+    btn.onclick = (function(idx) { return function() { doChoice(P.choicesStore[idx]); }; })(i);
+    ch.appendChild(btn);
   }
-  ch.innerHTML = htm;
 }
 
 // ─── 选项处理 ───
