@@ -60,12 +60,13 @@ function showNarrative(text) {
 
 function showChoices(choices) {
   const container = document.getElementById('choices');
+  if (!container) { console.error('[百层塔] choices容器不存在！'); return; }
   container.innerHTML = '';
   choices.forEach((c, i) => {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
     btn.innerHTML = '<span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + c.label;
-    btn.addEventListener('click', () => handleChoice(c, i));
+    btn.setAttribute('onclick', 'processChoice(' + i + ')');
     container.appendChild(btn);
   });
 }
@@ -951,6 +952,7 @@ console.log('[百层塔] 第三批加载完成——游戏引擎就绪');
 
 // ─── 核心渲染函数 ───
 function renderGame(msg, gameOver) {
+  try {
   updateStatus();
   setFloorDisplay();
   addBackpackButton();
@@ -1022,6 +1024,8 @@ function renderGame(msg, gameOver) {
   let choices = getFloorChoices(player.floor);
   showChoices(choices);
 }
+  } catch(e) { console.error("[百层塔] renderGame异常:", e); showNarrative("出错了...请刷新页面重试"); }
+
 
 // ─── 处理选项点击 ───
 function handleChoice(choice, index) {
