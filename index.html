@@ -152,6 +152,351 @@ body {
     <span>月影出品 · 月影工作室</span>
   </div>
 </div>
-<script src="game.js"></script>
+<script>
+// ═══════════════════════════════════════
+// 百层塔 · 肉鸽爬塔网页游戏 v2.0
+// 月影工作室出品
+// ═══════════════════════════════════════
+
+// ─── 核心状态 ───
+var P = {
+  floor: 1, hp: 5, maxHp: 5, atk: 1, gold: 0,
+  treasures: [], log: [],
+  towerOutside: false, outsideSteps: 0, outsideMax: 0,
+  showingShop: false, shopItems: [],
+  showingMaze: false, mazeChoices: [],
+  showingRiddle: false, riddle: null,
+  showingFakeEnd: false, fakeEndChoices: [],
+  deaths: 0, weather: '晴朗'
+};
+
+// ─── 工具函数 ───
+function $(id) { return document.getElementById(id); }
+function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// ─── 渲染 ───
+function render() {
+  var h = $('hp'), a = $('atk'), g = $('gold'), f = $('floor-display'), fn = $('floor-name'), nar = $('narrative'), ch = $('choices');
+  if (!h || !a || !g || !f || !fn || !nar || !ch) return;
+  h.textContent = P.hp + '/' + P.maxHp;
+  a.textContent = P.atk;
+  g.textContent = P.gold;
+  
+  if (P.towerOutside) { f.textContent = '塔外 · ???'; fn.textContent = ''; }
+  else { f.textContent = '第 ' + P.floor + ' 层'; fn.textContent = ''; }
+  
+  // 显示日志
+  var txt = P.log.length > 0 ? P.log.join('\n') : '第' + P.floor + '层——前方出现了岔路...';
+  nar.textContent = txt;
+  
+  // 死亡检查
+  if (P.hp <= 0) {
+    nar.textContent = '你倒在了第' + P.floor + '层...死亡次数：' + (P.deaths + 1);
+    ch.innerHTML = '<button class="choice-btn" onclick="startGame()"><span class="choice-label">R</span>重新挑战</button>';
+    return;
+  }
+  
+  // 胜利
+  if (P.floor > 101) {
+    nar.textContent = '你击败了虚空之主！塔崩毁了...你成为了新的传说。';
+    ch.innerHTML = '<button class="choice-btn" onclick="startGame()"><span class="choice-label">R</span>再玩一次</button>';
+    return;
+  }
+  
+  // 特殊界面：商店
+  if (P.showingShop) {
+    var htm = '<div style="margin-bottom:8px;color:#f0c060;">流浪商人的商品：</div>';
+    for (var i = 0; i < P.shopItems.length; i++) {
+      var item = P.shopItems[i];
+      htm += '<button class="choice-btn" onclick="buyShop(' + i + ')"><span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + item.name + ' - ' + item.desc + '（' + item.cost + '金币）</button>';
+    }
+    htm += '<button class="choice-btn" onclick="P.showingShop=false; P.floor++; render();"><span class="choice-label">X</span>离开商店</button>';
+    ch.innerHTML = htm;
+    return;
+  }
+  
+  // 特殊界面：迷宫
+  if (P.showingMaze) {
+    var htm = '';
+    for (var i = 0; i < P.mazeChoices.length; i++) {
+      htm += '<button class="choice-btn" onclick="doMaze(' + i + ')"><span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + P.mazeChoices[i].text + '</button>';
+    }
+    ch.innerHTML = htm;
+    return;
+  }
+  
+  // 特殊界面：谜题
+  if (P.showingRiddle) {
+    ch.innerHTML = '<input id="riddle-in" type="text" placeholder="输入你的答案..." style="width:100%;padding:12px;background:#1a1a2e;border:1px solid #3a3a4a;border-radius:8px;color:#c8b888;font-size:14px;margin-bottom:8px;"><button class="choice-btn" onclick="doRiddle()"><span class="choice-label">OK</span>提交答案</button>';
+    return;
+  }
+  
+  // 特殊界面：假结局
+  if (P.showingFakeEnd) {
+    var htm = '';
+    for (var i = 0; i < P.fakeEndChoices.length; i++) {
+      htm += '<button class="choice-btn" onclick="doFakeEnd(' + i + ')"><span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + P.fakeEndChoices[i].label + '</button>';
+    }
+    ch.innerHTML = htm;
+    return;
+  }
+  
+  // 正常楼层——生成ABCD选项
+  var choices = [
+    {label: 'A. 一道金光闪过', type: 'reward'},
+    {label: 'B. 远处传来叫卖声', type: 'shop'},
+    {label: 'C. 一阵腥风扑面', type: 'danger'},
+    {label: P.floor < 60 && Math.random() < 0.25 ? 'D. 窗外有藤蔓垂落' : 'D. 一扇紧闭的铁门', type: P.floor < 60 && Math.random() < 0.25 ? 'outside' : 'mystery'}
+  ];
+  var htm = '';
+  for (var i = 0; i < choices.length; i++) {
+    htm += '<button class="choice-btn" onclick="doChoice('' + JSON.stringify(choices[i]).replace(/"/g, '&quot;') + '')"><span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + choices[i].label.split('. ')[1] + '</button>';
+  }
+  ch.innerHTML = htm;
+}
+
+// ─── 选项处理 ───
+function doChoice(c) {
+  P.log = [];
+  switch(c.type) {
+    case 'reward':
+      var g = rnd(10, 30) + P.floor;
+      P.gold += g;
+      P.log = ['金光中你获得了' + g + '金币！'];
+      break;
+    case 'shop':
+      var tier = P.floor < 30 ? 1 : P.floor < 60 ? 2 : P.floor < 90 ? 3 : 4;
+      P.shopItems = [
+        {name: '生命药水', cost: 10 + tier*5, desc: '恢复' + (3+tier*2) + '生命', effect: 'heal'},
+        {name: '攻击卷轴', cost: 15 + tier*5, desc: '攻击+' + (1+tier), effect: 'atk'},
+        {name: '护盾符文', cost: 12 + tier*5, desc: '生命上限+' + (2+tier*2), effect: 'maxHp'}
+      ];
+      P.showingShop = true;
+      render();
+      return;
+    case 'danger':
+      if (Math.random() < 0.7) {
+        var m = getMon();
+        P.log = fight(m);
+      } else {
+        var d = rnd(2, 5);
+        P.hp -= d;
+        P.log = ['陷阱触发！受到' + d + '点伤害'];
+      }
+      break;
+    case 'outside':
+      P.towerOutside = true;
+      P.outsideSteps = 0;
+      P.outsideMax = rnd(6, 20);
+      P.log = ['你翻出窗外，抓住了藤蔓...塔外世界在你面前展开。'];
+      break;
+    case 'mystery':
+      var roll = Math.random();
+      if (roll < 0.3) { P.gold += rnd(10, 30); P.log = ['铁门后藏着一堆金币！']; }
+      else if (roll < 0.6) { P.log = ['铁门后空空如也...']; }
+      else { P.hp -= 2; P.log = ['铁门后窜出一只怪物！受到2点伤害']; }
+      break;
+  }
+  
+  // 塔外处理
+  if (P.towerOutside) {
+    P.outsideSteps++;
+    if (P.outsideSteps >= P.outsideMax) {
+      P.towerOutside = false;
+      P.floor += P.outsideSteps;
+      P.log.push('你找到了入口，回到了塔内！');
+    } else {
+      // 简化的塔外事件
+      var oevts = ['你爬过了一段藤蔓...', '一只蝙蝠飞过，你抓紧了墙壁', '墙缝里发现了几枚金币', '一阵暖风送来了一朵发光的花', '手指被石头划破，流了点血'];
+      P.log = [pick(oevts)];
+      render();
+      return;
+    }
+  }
+  
+  // 检查特殊楼层
+  checkSpecial();
+  if (P.showingMaze || P.showingRiddle || P.showingFakeEnd) { render(); return; }
+  
+  P.floor++;
+  if (P.hp <= 0) { P.deaths++; }
+  render();
+}
+
+// ─── 小怪生成 ───
+function getMon() {
+  var mons = [
+    {name:'骷髅兵', hp:2, atk:1, gold:8},
+    {name:'史莱姆', hp:1, atk:1, gold:5},
+    {name:'哥布林', hp:2, atk:2, gold:10},
+    {name:'幽灵', hp:2, atk:1, gold:6},
+    {name:'石像鬼', hp:3, atk:2, gold:12},
+    {name:'火焰精灵', hp:2, atk:3, gold:15},
+    {name:'暗影触手', hp:2, atk:2, gold:10},
+    {name:'毒蝎', hp:2, atk:2, gold:10},
+    {name:'岩石魔像', hp:4, atk:2, gold:14},
+    {name:'怨灵', hp:3, atk:3, gold:13},
+    {name:'奇美拉', hp:6, atk:4, gold:22},
+    {name:'雷鸟', hp:5, atk:5, gold:25},
+    {name:'暗影主教', hp:6, atk:5, gold:26},
+    {name:'冰封巨人', hp:8, atk:5, gold:30},
+    {name:'骨龙幼崽', hp:10, atk:6, gold:35}
+  ];
+  var tier = P.floor < 20 ? 0 : P.floor < 40 ? 3 : P.floor < 60 ? 6 : P.floor < 90 ? 10 : 12;
+  return pick(mons.slice(tier, Math.min(tier + 5, mons.length)));
+}
+
+// ─── 战斗 ───
+function fight(m) {
+  var log = [], mhp = m.hp, round = 0;
+  while (mhp > 0 && P.hp > 0) {
+    round++;
+    mhp -= P.atk;
+    log.push('第' + round + '回合：你对' + m.name + '造成' + P.atk + '点伤害');
+    if (mhp <= 0) { P.gold += m.gold; log.push(m.name + '被击败！获得' + m.gold + '金币'); break; }
+    P.hp -= m.atk;
+    log.push(m.name + '对你造成' + m.atk + '点伤害');
+    if (P.hp <= 0) { log.push('你倒下了...'); break; }
+  }
+  return log;
+}
+
+// ─── 特殊楼层 ───
+function checkSpecial() {
+  if (P.floor === 25 || P.floor === 50 || P.floor === 75) {
+    var bosses = {
+      25: [{name:'石像鬼领主', hp:15, atk:6, gold:50}],
+      50: [{name:'炎魔', hp:25, atk:10, gold:80}],
+      75: [{name:'虚空之龙', hp:40, atk:15, gold:120}]
+    };
+    var b = pick(bosses[P.floor]);
+    P.log = ['第' + P.floor + '层——BOSS战！' + b.name + '出现了！'];
+    P.log = P.log.concat(fight(b));
+    if (P.hp > 0) { P.gold += b.gold; P.log.push(b.name + '被击败！获得' + b.gold + '金币'); }
+    return;
+  }
+  if (P.floor === 96) {
+    P.mazeChoices = [
+      {text: 'A. 左转', result: 'correct', msg: '你找到了正确的路！'},
+      {text: 'B. 右转', result: 'wrong', msg: '你绕回了原地', dmg: 2},
+      {text: 'C. 直走', result: 'wrong', msg: '陷阱！尖刺弹出', dmg: 3},
+      {text: 'D. 回头', result: 'wrong', msg: '撞上了墙', dmg: 1}
+    ];
+    P.showingMaze = true;
+    P.log = ['第96层：无尽迷宫——选择方向...'];
+    return;
+  }
+  if (P.floor === 97) {
+    var d = rnd(5, 10);
+    P.hp -= d;
+    P.log = ['第97层：死亡机关——滚石、毒箭、地刺同时启动！受到' + d + '点伤害'];
+    return;
+  }
+  if (P.floor === 98) {
+    P.log = ['第98层——魔龙·焚世者盘踞于此！'];
+    P.log = P.log.concat(fight({name:'魔龙·焚世者', hp:50, atk:18, gold:200}));
+    if (P.hp > 0) { P.gold += 200; P.log.push('魔龙被击败！获得200金币'); }
+    return;
+  }
+  if (P.floor === 99) {
+    var qs = [
+      {q: '什么东西越洗越脏？', a: '水'},
+      {q: '什么东西打破了所有人都叫好？', a: '记录'},
+      {q: '什么东西借了不用还？', a: '光'}
+    ];
+    P.riddle = pick(qs);
+    P.showingRiddle = true;
+    P.log = ['第99层：知识恶魔——"回答我：' + P.riddle.q + '"'];
+    return;
+  }
+  if (P.floor === 100) {
+    P.fakeEndChoices = [
+      {label: 'A. "我已胜利！"', result: 'death', msg: '魔王大笑着将你碾碎...你死了。'},
+      {label: 'B. "这不是终点。"', result: 'continue', msg: '魔王的面具碎裂，露出了通往101层的阶梯...'}
+    ];
+    P.showingFakeEnd = true;
+    P.log = ['第100层：魔王端坐在王座上——"你已到达塔顶，如何选择？"'];
+    return;
+  }
+  if (P.floor === 101) {
+    P.log = ['第101层——虚空之主在黑暗中等待...这是真正的最终之战！'];
+    P.log = P.log.concat(fight({name:'真·魔王·虚空之主', hp:80, atk:25, gold:500}));
+    if (P.hp > 0) { P.gold += 500; P.log.push('虚空之主被击败！你成为了新的传说！'); }
+    return;
+  }
+}
+
+// ─── 商店购买 ───
+function buyShop(i) {
+  var item = P.shopItems[i];
+  if (!item || P.gold < item.cost) return;
+  P.gold -= item.cost;
+  if (item.effect === 'heal') P.hp = Math.min(P.maxHp, P.hp + (3 + Math.floor(P.floor/10)*2));
+  if (item.effect === 'atk') P.atk += (1 + Math.floor(P.floor/10));
+  if (item.effect === 'maxHp') P.maxHp += (2 + Math.floor(P.floor/10)*2);
+  P.showingShop = false;
+  P.floor++;
+  render();
+}
+
+// ─── 迷宫 ───
+function doMaze(i) {
+  var c = P.mazeChoices[i];
+  P.log = [c.msg];
+  if (c.dmg) { P.hp -= c.dmg; P.log.push('受到' + c.dmg + '点伤害'); }
+  P.showingMaze = false;
+  P.floor++;
+  render();
+}
+
+// ─── 谜题 ───
+function doRiddle() {
+  var inp = $('riddle-in');
+  var ans = inp ? inp.value.trim() : '';
+  if (ans === P.riddle.a) {
+    P.log = ['知识恶魔点了点头——"你通过了。"'];
+    P.atk += 3; P.hp += 5;
+    P.log.push('获得：攻击+3，生命+5');
+  } else {
+    P.log = ['知识恶魔摇了摇头——"愚蠢。"'];
+    P.hp -= 5;
+    P.log.push('受到5点伤害');
+  }
+  P.showingRiddle = false;
+  P.floor++;
+  render();
+}
+
+// ─── 假结局 ───
+function doFakeEnd(i) {
+  var c = P.fakeEndChoices[i];
+  P.log = [c.msg];
+  if (c.result === 'death') { P.hp = 0; }
+  else { P.floor = 101; }
+  P.showingFakeEnd = false;
+  render();
+}
+
+// ─── 开始游戏 ───
+function startGame() {
+  P.floor = 1; P.hp = 5; P.maxHp = 5; P.atk = 1; P.gold = 0;
+  P.treasures = []; P.log = ['你踏入了百层塔...'];
+  P.towerOutside = false; P.outsideSteps = 0; P.outsideMax = 0;
+  P.showingShop = false; P.showingMaze = false; P.showingRiddle = false; P.showingFakeEnd = false;
+  P.deaths = 0; P.weather = '晴朗';
+  render();
+}
+
+// ─── 页面加载 ───
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', function() { startGame(); });
+} else {
+  startGame();
+}
+
+console.log('[百层塔 v2.0] 极简架构加载完成');
+
+</script>
 </body>
 </html>
