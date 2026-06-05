@@ -139,9 +139,14 @@ body {
   <div id="floor-display">第 1 层</div>
   <div id="floor-name"></div>
   <div id="main-area">
-    <div id="narrative">欢迎来到百层塔……</div>
+    <div id="narrative">欢迎来到百层塔——点击下方按钮开始爬塔！</div>
   </div>
   <div id="choices"></div>
+  <div id="choices">
+    <button class="choice-btn" style="text-align:center;font-size:18px;border-color:#f0c060;" onclick="if(typeof startNewGame==='function')startNewGame();else location.reload();">
+      <span class="choice-label">🏰</span>开始爬塔
+    </button>
+  </div>
   <div id="bottom-bar">
     <span>百层塔 v1.0</span>
     <span>月影出品 · 月影工作室</span>
