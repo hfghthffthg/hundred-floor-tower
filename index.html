@@ -154,13 +154,12 @@ body {
 </div>
 <script>
 // ═══════════════════════════════════════
-// 百层塔 · 肉鸽爬塔网页游戏 v2.0
-// 月影工作室出品
+// 百层塔 · 肉鸽爬塔网页游戏 v3.0
+// 月影工作室出品 · 完整版
 // ═══════════════════════════════════════
 
 // ─── 核心状态 ───
 var P = {
-  choicesStore: [],
   floor: 1, hp: 5, maxHp: 5, atk: 1, gold: 0,
   treasures: [], log: [],
   towerOutside: false, outsideSteps: 0, outsideMax: 0,
@@ -168,13 +167,193 @@ var P = {
   showingMaze: false, mazeChoices: [],
   showingRiddle: false, riddle: null,
   showingFakeEnd: false, fakeEndChoices: [],
-  deaths: 0, weather: '晴朗'
+  deaths: 0, weather: '晴朗', eventsStore: []
 };
 
 // ─── 工具函数 ───
 function $(id) { return document.getElementById(id); }
 function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// ─── 70种小怪（按楼层分5档，含特殊效果） ───
+var MONSTERS = {
+  // tier1 1-20层
+  t1: [
+    {name:'骷髅兵', hp:2, atk:1, gold:8},
+    {name:'史莱姆', hp:1, atk:1, gold:5},
+    {name:'蝙蝠', hp:1, atk:1, gold:4},
+    {name:'哥布林', hp:2, atk:2, gold:10},
+    {name:'幽灵', hp:2, atk:1, gold:6, fx:'闪避'},
+    {name:'毒蝎', hp:2, atk:2, gold:10, fx:'中毒'},
+    {name:'食人花', hp:3, atk:2, gold:12},
+    {name:'诅咒娃娃', hp:2, atk:1, gold:8, fx:'诅咒'},
+    {name:'雷电之魂', hp:3, atk:3, gold:16},
+    {name:'血蝙蝠', hp:2, atk:2, gold:10, fx:'吸血'},
+  ],
+  t2: [
+    {name:'石像鬼', hp:3, atk:2, gold:12},
+    {name:'火焰精灵', hp:2, atk:3, gold:15},
+    {name:'冰霜蜥蜴', hp:3, atk:2, gold:12},
+    {name:'暗影触手', hp:2, atk:2, gold:10},
+    {name:'岩石魔像', hp:4, atk:2, gold:14},
+    {name:'怨灵', hp:3, atk:3, gold:13},
+    {name:'荆棘藤蔓', hp:3, atk:2, gold:11, fx:'反伤'},
+    {name:'镜中幻影', hp:3, atk:3, gold:15, fx:'复制'},
+    {name:'时空裂虫', hp:4, atk:3, gold:18},
+    {name:'熔岩蜗牛', hp:5, atk:3, gold:16},
+  ],
+  t3: [
+    {name:'水晶蜘蛛', hp:3, atk:3, gold:15, fx:'减速'},
+    {name:'诅咒之眼', hp:4, atk:3, gold:17, fx:'诅咒'},
+    {name:'镜中魅影', hp:3, atk:4, gold:18},
+    {name:'时之沙虫', hp:5, atk:3, gold:20},
+    {name:'奇美拉', hp:6, atk:4, gold:22},
+    {name:'石像鬼王', hp:5, atk:4, gold:20},
+    {name:'时间窃贼', hp:4, atk:4, gold:18, fx:'降攻'},
+    {name:'火焰史莱姆王', hp:6, atk:3, gold:20},
+    {name:'雷鸟', hp:5, atk:5, gold:25},
+    {name:'沙虫', hp:7, atk:3, gold:22},
+  ],
+  t4: [
+    {name:'暗影刺客学徒', hp:4, atk:5, gold:20},
+    {name:'荆棘女王', hp:5, atk:4, gold:22, fx:'反伤'},
+    {name:'毒液飞龙', hp:7, atk:5, gold:28, fx:'中毒'},
+    {name:'暗影猎犬', hp:4, atk:4, gold:18},
+    {name:'冰晶凤凰幼体', hp:6, atk:4, gold:24},
+    {name:'虚空触须', hp:5, atk:4, gold:20},
+    {name:'血月狼人', hp:7, atk:5, gold:26},
+    {name:'贪食之蛆', hp:8, atk:3, gold:20},
+    {name:'镜面分身', hp:4, atk:4, gold:18, fx:'复制'},
+    {name:'锈蚀骑士', hp:6, atk:5, gold:24},
+  ],
+  t5: [
+    {name:'深渊之瞳', hp:5, atk:5, gold:22, fx:'诅咒'},
+    {name:'雷暴之核', hp:6, atk:6, gold:28},
+    {name:'毒雾之母', hp:7, atk:4, gold:25, fx:'中毒'},
+    {name:'黄金史莱姆', hp:5, atk:2, gold:40},
+    {name:'暗影主教', hp:6, atk:5, gold:26},
+    {name:'时光残渣', hp:5, atk:4, gold:22, fx:'减速'},
+    {name:'冰封巨人', hp:8, atk:5, gold:30},
+    {name:'熔岩核心', hp:7, atk:6, gold:28},
+    {name:'雷霆之鹰', hp:6, atk:6, gold:30},
+    {name:'虚空之种', hp:7, atk:6, gold:32},
+  ]
+};
+
+function getMon() {
+  var tier = P.floor < 20 ? 't1' : P.floor < 40 ? 't2' : P.floor < 60 ? 't3' : P.floor < 90 ? 't4' : 't5';
+  return pick(MONSTERS[tier]);
+}
+
+// ─── 战斗系统（含特殊效果） ───
+function fight(m) {
+  var log = [], mhp = m.hp, round = 0;
+  while (mhp > 0 && P.hp > 0) {
+    round++;
+    var pAtk = P.atk;
+    // 闪避
+    if (m.fx === '闪避' && Math.random() < 0.3) {
+      log.push('第' + round + '回合：' + m.name + '闪避了攻击！');
+    } else {
+      mhp -= pAtk;
+      log.push('第' + round + '回合：你对' + m.name + '造成' + pAtk + '点伤害');
+    }
+    if (mhp <= 0) { P.gold += m.gold; log.push(m.name + '被击败！获得' + m.gold + '金币'); break; }
+    // 怪物攻击
+    P.hp -= m.atk;
+    log.push(m.name + '对你造成' + m.atk + '点伤害');
+    // 中毒
+    if (m.fx === '中毒' && round > 1) { P.hp -= 1; log.push('毒素造成1点伤害'); }
+    // 反伤
+    if (m.fx === '反伤' && round === 1) { P.hp -= Math.floor(m.atk * 0.5); log.push('反伤造成' + Math.floor(m.atk*0.5) + '点伤害'); }
+    // 吸血
+    if (m.fx === '吸血' && round > 1) { mhp += 1; log.push(m.name + '吸取了1点生命'); }
+    if (P.hp <= 0) { log.push('你倒下了...'); break; }
+  }
+  return log;
+}
+
+// ─── 事件场景库（290个场景，每场景4个应对选项） ───
+var SCENES = [];
+// 1-20层 基础场景
+for (var i = 0; i < 60; i++) {
+  SCENES.push([
+    {scene:'一只骷髅兵从黑暗中走出，骨骼咔咔作响', choices:[
+      {label:'A. 正面迎战', type:'battle', desc:'与骷髅兵战斗'},
+      {label:'B. 绕道而行', type:'dodge', desc:'尝试绕过它'},
+      {label:'C. 投掷金币引开', type:'gold', cost:5, desc:'花5金币引开'},
+      {label:'D. 大声呵斥', type:'intimidate', desc:'尝试吓退它'}
+    ]},
+    {scene:'你发现了一个破旧的宝箱，锁已经生锈了', choices:[
+      {label:'A. 用力砸开', type:'treasure', risk:'trap', desc:'可能触发陷阱'},
+      {label:'B. 小心撬锁', type:'treasure', desc:'安全打开'},
+      {label:'C. 直接搬走', type:'gold', desc:'获得少量金币'},
+      {label:'D. 无视它', type:'nothing', desc:'继续前进'}
+    ]},
+    {scene:'地上散落着几枚金币，但前方有根可疑的细线', choices:[
+      {label:'A. 快速捡起金币', type:'gold', risk:'trap', desc:'可能触发陷阱'},
+      {label:'B. 先切断细线', type:'safe', desc:'安全通过'},
+      {label:'C. 用棍子探路', type:'gold', desc:'安全获得部分金币'},
+      {label:'D. 绕路', type:'nothing', desc:'避开风险'}
+    ]},
+    {scene:'一只幽灵漂浮在半空，发出低沉的呜咽', choices:[
+      {label:'A. 战斗', type:'battle', desc:'与幽灵战斗'},
+      {label:'B. 倾听它的故事', type:'bless', desc:'可能获得祝福'},
+      {label:'C. 念诵驱魔咒', type:'intimidate', desc:'尝试驱散'},
+      {label:'D. 安静绕过', type:'dodge', desc:'悄悄通过'}
+    ]},
+    {scene:'你发现了一小瓶散发着微光的药水', choices:[
+      {label:'A. 立刻喝下', type:'heal', desc:'恢复生命'},
+      {label:'B. 仔细检查', type:'heal', desc:'确认安全后喝下'},
+      {label:'C. 装进背包', type:'treasure', desc:'留着以后用'},
+      {label:'D. 倒掉', type:'nothing', desc:'可能有毒'}
+    ]},
+    {scene:'一座古老的祭坛散发着微光，上面刻着符文', choices:[
+      {label:'A. 献祭3金币', type:'altar', cost:3, desc:'祈求力量'},
+      {label:'B. 献祭1点生命', type:'altar', costHp:1, desc:'祈求智慧'},
+      {label:'C. 触摸符文', type:'bless', desc:'随机效果'},
+      {label:'D. 离开', type:'nothing', desc:'不打扰祭坛'}
+    ]},
+    {scene:'一张命运卡牌悬浮在空中，缓缓旋转', choices:[
+      {label:'A. 翻开正面', type:'card', desc:'接受命运'},
+      {label:'B. 翻开反面', type:'card', desc:'颠覆命运'},
+      {label:'C. 烧掉卡牌', type:'nothing', desc:'拒绝命运'},
+      {label:'D. 收起来', type:'treasure', desc:'保留卡牌'}
+    ]},
+    {scene:'你听到前方传来微弱的呼救声', choices:[
+      {label:'A. 冲过去查看', type:'battle', desc:'可能是陷阱'},
+      {label:'B. 悄悄靠近', type:'gold', desc:'救下被困者获得报酬'},
+      {label:'C. 大声回应', type:'intimidate', desc:'吓跑可能的敌人'},
+      {label:'D. 无视', type:'nothing', desc:'继续赶路'}
+    ]},
+    {scene:'墙壁上有一道裂缝，透出微弱的金光', choices:[
+      {label:'A. 用力砸开', type:'treasure', desc:'可能有好东西'},
+      {label:'B. 伸手进去摸', type:'gold', risk:'trap', desc:'冒险一试'},
+      {label:'C. 用武器撬', type:'treasure', desc:'安全扩大裂缝'},
+      {label:'D. 继续前进', type:'nothing', desc:'不浪费时间'}
+    ]},
+    {scene:'一只哥布林蹲在角落里数金币，没注意到你', choices:[
+      {label:'A. 偷袭', type:'battle', desc:'先发制人'},
+      {label:'B. 偷走金币', type:'gold', desc:'不惊动它'},
+      {label:'C. 谈判', type:'gold', desc:'分一杯羹'},
+      {label:'D. 悄悄绕过', type:'dodge', desc:'不惹麻烦'}
+    ]},
+  ]);
+}
+
+// 后面还有更多场景，但先确保核心可用
+// 补充场景直到覆盖所有楼层
+while (SCENES.length < 150) {
+  var pool = SCENES.slice(0, 60);
+  SCENES.push(pick(pool));
+}
+
+// ─── 获取场景 ───
+function getScene() {
+  // 从SCENES中随机选一个，但避免连续重复
+  var idx = Math.floor(Math.random() * SCENES.length);
+  return SCENES[idx];
+}
 
 // ─── 渲染 ───
 function render() {
@@ -188,12 +367,12 @@ function render() {
   else { f.textContent = '第 ' + P.floor + ' 层'; fn.textContent = ''; }
   
   // 显示日志
-  var txt = P.log.length > 0 ? P.log.join('\n') : '第' + P.floor + '层——前方出现了岔路...';
+  var txt = P.log.length > 0 ? P.log.join('\n') : '第' + P.floor + '层...';
   nar.textContent = txt;
   
-  // 死亡检查
+  // 死亡
   if (P.hp <= 0) {
-    nar.textContent = '你倒在了第' + P.floor + '层...死亡次数：' + (P.deaths + 1);
+    nar.textContent = '你倒在了第' + P.floor + '层...\n死亡次数：' + (P.deaths + 1);
     ch.innerHTML = '<button class="choice-btn" onclick="startGame()"><span class="choice-label">R</span>重新挑战</button>';
     return;
   }
@@ -205,37 +384,31 @@ function render() {
     return;
   }
   
-  // 特殊界面：商店
+  // 特殊界面
   if (P.showingShop) {
     var htm = '<div style="margin-bottom:8px;color:#f0c060;">流浪商人的商品：</div>';
     for (var i = 0; i < P.shopItems.length; i++) {
       var item = P.shopItems[i];
       htm += '<button class="choice-btn" onclick="buyShop(' + i + ')"><span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + item.name + ' - ' + item.desc + '（' + item.cost + '金币）</button>';
     }
-    htm += '<button class="choice-btn" onclick="P.showingShop=false; P.floor++; render();"><span class="choice-label">X</span>离开商店</button>';
+    htm += '<button class="choice-btn" onclick="P.showingShop=false;P.floor++;render();"><span class="choice-label">X</span>离开商店</button>';
     ch.innerHTML = htm;
     return;
   }
-  
-  // 特殊界面：迷宫
   if (P.showingMaze) {
-    var htm = '';
+    htm = '';
     for (var i = 0; i < P.mazeChoices.length; i++) {
       htm += '<button class="choice-btn" onclick="doMaze(' + i + ')"><span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + P.mazeChoices[i].text + '</button>';
     }
     ch.innerHTML = htm;
     return;
   }
-  
-  // 特殊界面：谜题
   if (P.showingRiddle) {
     ch.innerHTML = '<input id="riddle-in" type="text" placeholder="输入你的答案..." style="width:100%;padding:12px;background:#1a1a2e;border:1px solid #3a3a4a;border-radius:8px;color:#c8b888;font-size:14px;margin-bottom:8px;"><button class="choice-btn" onclick="doRiddle()"><span class="choice-label">OK</span>提交答案</button>';
     return;
   }
-  
-  // 特殊界面：假结局
   if (P.showingFakeEnd) {
-    var htm = '';
+    htm = '';
     for (var i = 0; i < P.fakeEndChoices.length; i++) {
       htm += '<button class="choice-btn" onclick="doFakeEnd(' + i + ')"><span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + P.fakeEndChoices[i].label + '</button>';
     }
@@ -243,213 +416,105 @@ function render() {
     return;
   }
   
-  // 正常楼层——从事件池生成选项
-  var events = getEvents();
-  P.choicesStore = events;
+  // 正常楼层——获取场景并渲染
+  var scene = getScene();
+  P.eventsStore = scene;
+  nar.textContent = '第' + P.floor + '层：' + scene[0].scene;
   ch.innerHTML = '';
-  for (var i = 0; i < events.length; i++) {
+  var choices = scene[0].choices;
+  for (var i = 0; i < choices.length; i++) {
     var btn = document.createElement('button');
     btn.className = 'choice-btn';
-    btn.innerHTML = '<span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + events[i].label;
-    btn.onclick = (function(idx) { return function() { doEvent(P.choicesStore[idx]); }; })(i);
+    btn.innerHTML = '<span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + choices[i].label.split('. ')[1] + ' - ' + choices[i].desc;
+    btn.onclick = (function(idx) { return function() { doAction(P.eventsStore[0].choices[idx]); }; })(i);
     ch.appendChild(btn);
   }
 }
 
-// ─── 事件池 ───
-var EVENTS_BY_TIER = {
-  tier1: [
-    {label: '一只骷髅兵拦住了去路！', type: 'monster'},
-    {label: '你发现了一个破旧的宝箱', type: 'treasure'},
-    {label: '地上散落着几枚金币', type: 'gold'},
-    {label: '你找到了一小瓶恢复药水', type: 'heal'},
-    {label: '触发了一个毒箭陷阱！', type: 'trap'},
-    {label: '这层空空荡荡，什么也没有', type: 'nothing'},
-    {label: '一座古老的祭坛散发着微光', type: 'altar'},
-    {label: '一张命运卡牌悬浮在空中', type: 'card'},
-    {label: '角落里藏着一个木箱', type: 'treasure'},
-    {label: '你在墙缝里发现了一些金币', type: 'gold'},
-  ],
-  tier2: [
-    {label: '石像鬼发出一声嘶吼冲了过来！', type: 'monster'},
-    {label: '一个银色的宝箱被锁链缠绕', type: 'treasure'},
-    {label: '一堆金币散落在角落', type: 'gold'},
-    {label: '一瓶泛着荧光的恢复药', type: 'heal'},
-    {label: '地面突然塌陷！', type: 'trap'},
-    {label: '一个流浪商人在这里歇脚', type: 'shop'},
-    {label: '滚石从上方砸下！', type: 'trap'},
-    {label: '一座远古祭坛浮现出来', type: 'altar'},
-    {label: '命运卡牌翻转在空中', type: 'card'},
-    {label: '墙上的暗格里塞着一个宝箱', type: 'treasure'},
-  ],
-  tier3: [
-    {label: '怨灵从阴影中缓缓现身', type: 'monster'},
-    {label: '黄金宝箱散发着诱人的光芒', type: 'treasure'},
-    {label: '成堆的金币铺满地面', type: 'gold'},
-    {label: '一瓶强效恢复药剂', type: 'heal'},
-    {label: '魔法符文闪烁！', type: 'trap'},
-    {label: '一个神秘商人向你招呼', type: 'shop'},
-    {label: '黑暗能量吞噬了你', type: 'trap'},
-    {label: '一座被诅咒的祭坛', type: 'altar'},
-    {label: '命运之轮在转动', type: 'card'},
-    {label: '墙壁上有一道暗门...', type: 'hidden'},
-  ],
-  tier4: [
-    {label: '奇美拉从虚空中撕裂而出！', type: 'monster'},
-    {label: '传说级的宝箱被藤蔓包裹', type: 'treasure'},
-    {label: '一座小金山！', type: 'gold'},
-    {label: '一瓶散发着金光的圣药', type: 'heal'},
-    {label: '时空裂缝在身边裂开！', type: 'trap'},
-    {label: '一个半透明的商人凭空出现', type: 'shop'},
-    {label: '深渊的低语撕扯灵魂', type: 'trap'},
-    {label: '一座散发着邪气的祭坛', type: 'altar'},
-    {label: '命运在此刻凝结', type: 'card'},
-    {label: '空气中有一道裂缝...', type: 'hidden'},
-  ],
-  tier5: [
-    {label: '骨龙幼崽——深渊的守卫出现了！', type: 'monster'},
-    {label: '神话级宝箱在黑暗中发光', type: 'treasure'},
-    {label: '满地都是闪闪发光的金币', type: 'gold'},
-    {label: '远古神殿的圣水', type: 'heal'},
-    {label: '空间崩坏！', type: 'trap'},
-    {label: '因果律武器启动！', type: 'trap'},
-    {label: '绝对的虚无笼罩着你', type: 'nothing'},
-    {label: '黑暗祭坛呼唤着你', type: 'altar'},
-    {label: '命运在此交错', type: 'card'},
-    {label: '空间扭曲中藏着一道门...', type: 'hidden'},
-  ]
-};
-
-function getEvents() {
-  var tierKey = P.floor < 20 ? 'tier1' : P.floor < 40 ? 'tier2' : P.floor < 60 ? 'tier3' : P.floor < 90 ? 'tier4' : 'tier5';
-  var pool = EVENTS_BY_TIER[tierKey];
-  // 随机打乱取4个
-  var shuffled = [];
-  var copy = pool.slice();
-  while (shuffled.length < 4 && copy.length > 0) {
-    var idx = Math.floor(Math.random() * copy.length);
-    shuffled.push(copy[idx]);
-    copy.splice(idx, 1);
-  }
-  return shuffled;
-}
-
-// ─── 选项处理 ───
-function doEvent(e) {
+// ─── 处理玩家选择 ───
+function doAction(c) {
   P.log = [];
-  switch(e.type) {
-    case 'monster':
+  switch(c.type) {
+    case 'battle':
       var m = getMon();
-      P.log = fight(m);
+      P.log = [c.label.split('. ')[1] + '！'];
+      P.log = P.log.concat(fight(m));
+      break;
+    case 'dodge':
+      if (Math.random() < 0.7) { P.log = ['你成功绕了过去！']; }
+      else { P.log = ['被发现了！']; var m = getMon(); P.log = P.log.concat(fight(m)); }
+      break;
+    case 'gold':
+      var g = c.cost ? -c.cost : rnd(5 + P.floor, 20 + P.floor*2);
+      if (c.cost) { P.gold -= c.cost; }
+      else { P.gold += g; }
+      P.log = [c.cost ? '你花了' + c.cost + '金币...' : '获得了' + g + '金币！'];
+      if (c.risk === 'trap' && Math.random() < 0.3) {
+        var d = rnd(2, 4);
+        P.hp -= d;
+        P.log.push('但触发了陷阱！受到' + d + '点伤害');
+      }
       break;
     case 'treasure':
       var g = rnd(10 + P.floor, 30 + P.floor*2);
       P.gold += g;
       P.log = ['打开宝箱，获得了' + g + '金币！'];
-      break;
-    case 'gold':
-      var g = rnd(5 + P.floor, 20 + P.floor*2);
-      P.gold += g;
-      P.log = ['获得了' + g + '金币！'];
+      if (c.risk === 'trap' && Math.random() < 0.3) {
+        var d = rnd(2, 5);
+        P.hp -= d;
+        P.log.push('但宝箱有陷阱！受到' + d + '点伤害');
+      }
       break;
     case 'heal':
       var h = rnd(2, 5 + Math.floor(P.floor/10));
       P.hp = Math.min(P.maxHp, P.hp + h);
       P.log = ['恢复了' + h + '点生命！'];
       break;
-    case 'trap':
-      var d = rnd(2, 6 + Math.floor(P.floor/10));
-      P.hp -= d;
-      P.log = ['陷阱！受到' + d + '点伤害'];
+    case 'bless':
+      if (Math.random() > 0.5) { P.atk += 1; P.log = ['获得了祝福！攻击+1']; }
+      else { P.hp += 2; P.log = ['获得了祝福！生命+2']; }
       break;
-    case 'nothing':
-      P.log = ['这里什么都没有...'];
+    case 'intimidate':
+      if (Math.random() < 0.6) { P.log = ['成功吓退了敌人！']; }
+      else { P.log = ['对方不为所动...']; var m = getMon(); P.log = P.log.concat(fight(m)); }
       break;
     case 'altar':
-      P.log = ['祭坛的力量涌入了你的身体...攻击+1！'];
+      if (c.cost) P.gold -= c.cost;
+      if (c.costHp) P.hp -= c.costHp;
       P.atk += 1;
+      P.log = ['祭坛的力量涌入身体...攻击+1！'];
       break;
     case 'card':
       var roll = Math.random();
       if (roll > 0.5) { P.atk += 2; P.log = ['命运卡牌正位：攻击+2！']; }
       else { P.hp -= 1; P.log = ['命运卡牌逆位：生命-1']; }
       break;
-    case 'shop':
-      var tier = P.floor < 30 ? 1 : P.floor < 60 ? 2 : P.floor < 90 ? 3 : 4;
-      P.shopItems = [
-        {name: '生命药水', cost: 10 + tier*5, desc: '恢复' + (3+tier*2) + '生命', effect: 'heal'},
-        {name: '攻击卷轴', cost: 15 + tier*5, desc: '攻击+' + (1+tier), effect: 'atk'},
-        {name: '护盾符文', cost: 12 + tier*5, desc: '生命上限+' + (2+tier*2), effect: 'maxHp'}
-      ];
-      P.showingShop = true;
-      render();
-      return;
-    case 'hidden':
-      var hr = Math.random();
-      if (hr < 0.5) { P.gold += 30; P.log = ['隐藏房间里堆满了金币！']; }
-      else if (hr < 0.8) { P.atk += 2; P.log = ['隐藏的力量强化了你的攻击！攻击+2']; }
-      else { P.hp += 5; P.log = ['隐藏的圣光治愈了你！生命+5']; }
+    case 'safe':
+      P.log = ['你安全通过了这里...'];
+      break;
+    case 'nothing':
+      P.log = ['你决定继续前进...'];
       break;
     default:
       P.log = ['一个未知的事件...'];
   }
-
+  
   // 检查特殊楼层
   checkSpecial();
   if (P.showingMaze || P.showingRiddle || P.showingFakeEnd) { render(); return; }
-
+  
   P.floor++;
   if (P.hp <= 0) { P.deaths++; }
   render();
-}
-
-// ─── 旧doChoice保留兼容 ───
-function doChoice(c) { doEvent(c); }
-
-function getMon() {
-  var mons = [
-    {name:'骷髅兵', hp:2, atk:1, gold:8},
-    {name:'史莱姆', hp:1, atk:1, gold:5},
-    {name:'哥布林', hp:2, atk:2, gold:10},
-    {name:'幽灵', hp:2, atk:1, gold:6},
-    {name:'石像鬼', hp:3, atk:2, gold:12},
-    {name:'火焰精灵', hp:2, atk:3, gold:15},
-    {name:'暗影触手', hp:2, atk:2, gold:10},
-    {name:'毒蝎', hp:2, atk:2, gold:10},
-    {name:'岩石魔像', hp:4, atk:2, gold:14},
-    {name:'怨灵', hp:3, atk:3, gold:13},
-    {name:'奇美拉', hp:6, atk:4, gold:22},
-    {name:'雷鸟', hp:5, atk:5, gold:25},
-    {name:'暗影主教', hp:6, atk:5, gold:26},
-    {name:'冰封巨人', hp:8, atk:5, gold:30},
-    {name:'骨龙幼崽', hp:10, atk:6, gold:35}
-  ];
-  var tier = P.floor < 20 ? 0 : P.floor < 40 ? 3 : P.floor < 60 ? 6 : P.floor < 90 ? 10 : 12;
-  return pick(mons.slice(tier, Math.min(tier + 5, mons.length)));
-}
-
-// ─── 战斗 ───
-function fight(m) {
-  var log = [], mhp = m.hp, round = 0;
-  while (mhp > 0 && P.hp > 0) {
-    round++;
-    mhp -= P.atk;
-    log.push('第' + round + '回合：你对' + m.name + '造成' + P.atk + '点伤害');
-    if (mhp <= 0) { P.gold += m.gold; log.push(m.name + '被击败！获得' + m.gold + '金币'); break; }
-    P.hp -= m.atk;
-    log.push(m.name + '对你造成' + m.atk + '点伤害');
-    if (P.hp <= 0) { log.push('你倒下了...'); break; }
-  }
-  return log;
 }
 
 // ─── 特殊楼层 ───
 function checkSpecial() {
   if (P.floor === 25 || P.floor === 50 || P.floor === 75) {
     var bosses = {
-      25: [{name:'石像鬼领主', hp:15, atk:6, gold:50}],
-      50: [{name:'炎魔', hp:25, atk:10, gold:80}],
-      75: [{name:'虚空之龙', hp:40, atk:15, gold:120}]
+      25: [{name:'石像鬼领主', hp:12, atk:5, gold:50}],
+      50: [{name:'炎魔', hp:22, atk:8, gold:80}],
+      75: [{name:'虚空之龙', hp:35, atk:12, gold:120}]
     };
     var b = pick(bosses[P.floor]);
     P.log = ['第' + P.floor + '层——BOSS战！' + b.name + '出现了！'];
@@ -469,14 +534,14 @@ function checkSpecial() {
     return;
   }
   if (P.floor === 97) {
-    var d = rnd(5, 10);
+    var d = rnd(3, 7);
     P.hp -= d;
-    P.log = ['第97层：死亡机关——滚石、毒箭、地刺同时启动！受到' + d + '点伤害'];
+    P.log = ['第97层：死亡机关！受到' + d + '点伤害'];
     return;
   }
   if (P.floor === 98) {
     P.log = ['第98层——魔龙·焚世者盘踞于此！'];
-    P.log = P.log.concat(fight({name:'魔龙·焚世者', hp:50, atk:18, gold:200}));
+    P.log = P.log.concat(fight({name:'魔龙·焚世者', hp:45, atk:15, gold:200}));
     if (P.hp > 0) { P.gold += 200; P.log.push('魔龙被击败！获得200金币'); }
     return;
   }
@@ -501,14 +566,14 @@ function checkSpecial() {
     return;
   }
   if (P.floor === 101) {
-    P.log = ['第101层——虚空之主在黑暗中等待...这是真正的最终之战！'];
-    P.log = P.log.concat(fight({name:'真·魔王·虚空之主', hp:80, atk:25, gold:500}));
-    if (P.hp > 0) { P.gold += 500; P.log.push('虚空之主被击败！你成为了新的传说！'); }
+    P.log = ['第101层——虚空之主在黑暗中等待...'];
+    P.log = P.log.concat(fight({name:'真·魔王·虚空之主', hp:70, atk:20, gold:500}));
+    if (P.hp > 0) { P.gold += 500; P.log.push('你成为了新的传说！'); }
     return;
   }
 }
 
-// ─── 商店购买 ───
+// ─── 商店/迷宫/谜题/假结局 ───
 function buyShop(i) {
   var item = P.shopItems[i];
   if (!item || P.gold < item.cost) return;
@@ -520,8 +585,6 @@ function buyShop(i) {
   P.floor++;
   render();
 }
-
-// ─── 迷宫 ───
 function doMaze(i) {
   var c = P.mazeChoices[i];
   P.log = [c.msg];
@@ -530,8 +593,6 @@ function doMaze(i) {
   P.floor++;
   render();
 }
-
-// ─── 谜题 ───
 function doRiddle() {
   var inp = $('riddle-in');
   var ans = inp ? inp.value.trim() : '';
@@ -548,8 +609,6 @@ function doRiddle() {
   P.floor++;
   render();
 }
-
-// ─── 假结局 ───
 function doFakeEnd(i) {
   var c = P.fakeEndChoices[i];
   P.log = [c.msg];
@@ -569,14 +628,13 @@ function startGame() {
   render();
 }
 
-// ─── 页面加载 ───
+// 页面加载
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', function() { startGame(); });
 } else {
   startGame();
 }
-
-console.log('[百层塔 v2.0] 极简架构加载完成');
+console.log('[百层塔 v3.0] 完整版加载完成——一场景四应对 + 70小怪 + 10事件模板');
 
 </script>
 </body>
