@@ -154,11 +154,10 @@ body {
 </div>
 <script>
 // ═══════════════════════════════════════
-// 百层塔 · 肉鸽爬塔网页游戏 v3.0
-// 月影工作室出品 · 完整版
+// 百层塔 · 肉鸽爬塔网页游戏 v3.1
+// 月影工作室出品 · 290层独立事件
 // ═══════════════════════════════════════
 
-// ─── 核心状态 ───
 var P = {
   floor: 1, hp: 5, maxHp: 5, atk: 1, gold: 0,
   treasures: [], log: [],
@@ -167,77 +166,20 @@ var P = {
   showingMaze: false, mazeChoices: [],
   showingRiddle: false, riddle: null,
   showingFakeEnd: false, fakeEndChoices: [],
-  deaths: 0, weather: '晴朗', eventsStore: []
+  deaths: 0, weather: '晴朗', eventsStore: null
 };
 
-// ─── 工具函数 ───
 function $(id) { return document.getElementById(id); }
 function rnd(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
-// ─── 70种小怪（按楼层分5档，含特殊效果） ───
+// ─── 70种小怪 ───
 var MONSTERS = {
-  // tier1 1-20层
-  t1: [
-    {name:'骷髅兵', hp:2, atk:1, gold:8},
-    {name:'史莱姆', hp:1, atk:1, gold:5},
-    {name:'蝙蝠', hp:1, atk:1, gold:4},
-    {name:'哥布林', hp:2, atk:2, gold:10},
-    {name:'幽灵', hp:2, atk:1, gold:6, fx:'闪避'},
-    {name:'毒蝎', hp:2, atk:2, gold:10, fx:'中毒'},
-    {name:'食人花', hp:3, atk:2, gold:12},
-    {name:'诅咒娃娃', hp:2, atk:1, gold:8, fx:'诅咒'},
-    {name:'雷电之魂', hp:3, atk:3, gold:16},
-    {name:'血蝙蝠', hp:2, atk:2, gold:10, fx:'吸血'},
-  ],
-  t2: [
-    {name:'石像鬼', hp:3, atk:2, gold:12},
-    {name:'火焰精灵', hp:2, atk:3, gold:15},
-    {name:'冰霜蜥蜴', hp:3, atk:2, gold:12},
-    {name:'暗影触手', hp:2, atk:2, gold:10},
-    {name:'岩石魔像', hp:4, atk:2, gold:14},
-    {name:'怨灵', hp:3, atk:3, gold:13},
-    {name:'荆棘藤蔓', hp:3, atk:2, gold:11, fx:'反伤'},
-    {name:'镜中幻影', hp:3, atk:3, gold:15, fx:'复制'},
-    {name:'时空裂虫', hp:4, atk:3, gold:18},
-    {name:'熔岩蜗牛', hp:5, atk:3, gold:16},
-  ],
-  t3: [
-    {name:'水晶蜘蛛', hp:3, atk:3, gold:15, fx:'减速'},
-    {name:'诅咒之眼', hp:4, atk:3, gold:17, fx:'诅咒'},
-    {name:'镜中魅影', hp:3, atk:4, gold:18},
-    {name:'时之沙虫', hp:5, atk:3, gold:20},
-    {name:'奇美拉', hp:6, atk:4, gold:22},
-    {name:'石像鬼王', hp:5, atk:4, gold:20},
-    {name:'时间窃贼', hp:4, atk:4, gold:18, fx:'降攻'},
-    {name:'火焰史莱姆王', hp:6, atk:3, gold:20},
-    {name:'雷鸟', hp:5, atk:5, gold:25},
-    {name:'沙虫', hp:7, atk:3, gold:22},
-  ],
-  t4: [
-    {name:'暗影刺客学徒', hp:4, atk:5, gold:20},
-    {name:'荆棘女王', hp:5, atk:4, gold:22, fx:'反伤'},
-    {name:'毒液飞龙', hp:7, atk:5, gold:28, fx:'中毒'},
-    {name:'暗影猎犬', hp:4, atk:4, gold:18},
-    {name:'冰晶凤凰幼体', hp:6, atk:4, gold:24},
-    {name:'虚空触须', hp:5, atk:4, gold:20},
-    {name:'血月狼人', hp:7, atk:5, gold:26},
-    {name:'贪食之蛆', hp:8, atk:3, gold:20},
-    {name:'镜面分身', hp:4, atk:4, gold:18, fx:'复制'},
-    {name:'锈蚀骑士', hp:6, atk:5, gold:24},
-  ],
-  t5: [
-    {name:'深渊之瞳', hp:5, atk:5, gold:22, fx:'诅咒'},
-    {name:'雷暴之核', hp:6, atk:6, gold:28},
-    {name:'毒雾之母', hp:7, atk:4, gold:25, fx:'中毒'},
-    {name:'黄金史莱姆', hp:5, atk:2, gold:40},
-    {name:'暗影主教', hp:6, atk:5, gold:26},
-    {name:'时光残渣', hp:5, atk:4, gold:22, fx:'减速'},
-    {name:'冰封巨人', hp:8, atk:5, gold:30},
-    {name:'熔岩核心', hp:7, atk:6, gold:28},
-    {name:'雷霆之鹰', hp:6, atk:6, gold:30},
-    {name:'虚空之种', hp:7, atk:6, gold:32},
-  ]
+  t1: [{name:'骷髅兵',hp:3,atk:3,gold:6},{name:'哥布林',hp:2,atk:3,gold:4},{name:'幽灵',hp:2,atk:2,gold:10},{name:'石像鬼',hp:2,atk:3,gold:4},{name:'蝙蝠',hp:2,atk:1,gold:10},{name:'毒蝎',hp:2,atk:2,gold:9},{name:'史莱姆',hp:4,atk:1,gold:4},{name:'怨灵',hp:3,atk:2,gold:5},{name:'暗影触手',hp:4,atk:2,gold:7},{name:'火焰精灵',hp:4,atk:3,gold:6},{name:'冰霜蜥蜴',hp:4,atk:2,gold:9},{name:'水晶蜘蛛',hp:1,atk:3,gold:7},{name:'魅魔',hp:3,atk:1,gold:6},{name:'诅咒之眼',hp:3,atk:1,gold:9}],
+  t2: [{name:'怨灵',hp:5,atk:3,gold:9},{name:'暗影触手',hp:5,atk:2,gold:9},{name:'火焰精灵',hp:5,atk:3,gold:13},{name:'冰霜蜥蜴',hp:2,atk:3,gold:12},{name:'水晶蜘蛛',hp:2,atk:2,gold:12},{name:'魅魔',hp:3,atk:3,gold:12},{name:'诅咒之眼',hp:5,atk:3,gold:9},{name:'石像鬼王',hp:5,atk:4,gold:15},{name:'雷鸟',hp:3,atk:3,gold:8},{name:'虚空触须',hp:3,atk:3,gold:16},{name:'时间窃贼',hp:5,atk:4,gold:8},{name:'荆棘女王',hp:4,atk:2,gold:14},{name:'毒液飞龙',hp:5,atk:4,gold:11},{name:'冰晶凤凰',hp:3,atk:4,gold:9}],
+  t3: [{name:'石像鬼王',hp:6,atk:4,gold:22},{name:'雷鸟',hp:7,atk:3,gold:22},{name:'虚空触须',hp:3,atk:5,gold:23},{name:'时间窃贼',hp:5,atk:5,gold:25},{name:'荆棘女王',hp:3,atk:4,gold:21},{name:'毒液飞龙',hp:5,atk:4,gold:23},{name:'冰晶凤凰',hp:7,atk:5,gold:15},{name:'血月狼人',hp:6,atk:4,gold:22},{name:'食人花',hp:7,atk:4,gold:20},{name:'雷电之魂',hp:5,atk:3,gold:17},{name:'岩石魔像',hp:5,atk:4,gold:15},{name:'沙虫',hp:5,atk:3,gold:25},{name:'黄金史莱姆',hp:6,atk:3,gold:23},{name:'镜中魅影',hp:4,atk:3,gold:15}],
+  t4: [{name:'冰晶凤凰',hp:7,atk:6,gold:25},{name:'血月狼人',hp:5,atk:7,gold:20},{name:'食人花',hp:8,atk:4,gold:24},{name:'雷电之魂',hp:7,atk:4,gold:26},{name:'岩石魔像',hp:9,atk:7,gold:30},{name:'沙虫',hp:5,atk:5,gold:26},{name:'黄金史莱姆',hp:9,atk:7,gold:34},{name:'镜中魅影',hp:8,atk:5,gold:24},{name:'时空裂虫',hp:5,atk:5,gold:25},{name:'暗影主教',hp:7,atk:7,gold:28},{name:'镜面分身',hp:8,atk:7,gold:29},{name:'熔岩核心',hp:5,atk:6,gold:20},{name:'雷暴之核',hp:9,atk:7,gold:24},{name:'锈蚀骑士',hp:9,atk:4,gold:28}],
+  t5: [{name:'黄金史莱姆',hp:9,atk:7,gold:46},{name:'镜中魅影',hp:11,atk:8,gold:48},{name:'时空裂虫',hp:7,atk:8,gold:48},{name:'暗影主教',hp:11,atk:7,gold:50},{name:'镜面分身',hp:11,atk:6,gold:36},{name:'熔岩核心',hp:7,atk:5,gold:32},{name:'雷暴之核',hp:10,atk:6,gold:33},{name:'锈蚀骑士',hp:11,atk:5,gold:39},{name:'冰封巨人',hp:10,atk:5,gold:33},{name:'虚空之种',hp:11,atk:6,gold:31}]
 };
 
 function getMon() {
@@ -245,396 +187,97 @@ function getMon() {
   return pick(MONSTERS[tier]);
 }
 
-// ─── 战斗系统（含特殊效果） ───
+// ─── 290个独立事件场景 ───
+var SCENES = [{"scene": "两只暗影触手在分食猎物，还没注意到你", "choices": [{"label": "新手村#1-A", "type": "battle", "desc": "偷袭！先发制人"}, {"label": "新手村#1-B", "type": "dodge", "desc": "悄悄从旁边溜过去"}, {"label": "新手村#1-C", "type": "gold", "desc": "丢出3金币制造声响引开"}, {"label": "新手村#1-D", "type": "intimidate", "desc": "发出战吼震慑它们"}]}, {"scene": "你发现了一个倒塌的柱子下面，看起来有些年头了", "choices": [{"label": "新手村#2-A", "type": "treasure", "desc": "小心打开它"}, {"label": "新手村#2-B", "type": "gold", "desc": "粗暴砸开，可能损坏内容物"}, {"label": "新手村#2-C", "type": "dodge", "desc": "先检查有没有陷阱再开"}, {"label": "新手村#2-D", "type": "nothing", "desc": "太可疑了，无视它"}]}, {"scene": "前方通道弥漫着可疑的雾气——冰封地面", "choices": [{"label": "新手村#3-A", "type": "dodge", "desc": "屏住呼吸冲过去"}, {"label": "新手村#3-B", "type": "safe", "desc": "用布掩住口鼻慢行"}, {"label": "新手村#3-C", "type": "gold", "desc": "消耗3金币购买解毒草"}, {"label": "新手村#3-D", "type": "nothing", "desc": "等雾气散去"}]}, {"scene": "地面刻着命运卡牌的符文", "choices": [{"label": "新手村#4-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "新手村#4-B", "type": "bless", "desc": "念诵符文"}, {"label": "新手村#4-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "新手村#4-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "你捡到了一张命运卡牌", "choices": [{"label": "新手村#5-A", "type": "card", "desc": "翻开正面"}, {"label": "新手村#5-B", "type": "card", "desc": "翻开反面"}, {"label": "新手村#5-C", "type": "gold", "desc": "卖给流浪商人了"}, {"label": "新手村#5-D", "type": "nothing", "desc": "烧掉它"}]}, {"scene": "一只哥布林挡在你面前，眼神凶狠", "choices": [{"label": "新手村#6-A", "type": "battle", "desc": "与哥布林正面战斗"}, {"label": "新手村#6-B", "type": "intimidate", "desc": "大声呵斥试图吓退哥布林"}, {"label": "新手村#6-C", "type": "dodge", "desc": "利用地形绕过去"}, {"label": "新手村#6-D", "type": "gold", "desc": "丢出5金币引开它"}]}, {"scene": "破旧宝箱散发着微弱的光芒", "choices": [{"label": "新手村#7-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "新手村#7-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "新手村#7-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "新手村#7-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "前方通道弥漫着可疑的雾气——魔法符文爆炸", "choices": [{"label": "新手村#8-A", "type": "dodge", "desc": "屏住呼吸冲过去"}, {"label": "新手村#8-B", "type": "safe", "desc": "用布掩住口鼻慢行"}, {"label": "新手村#8-C", "type": "gold", "desc": "消耗3金币购买解毒草"}, {"label": "新手村#8-D", "type": "nothing", "desc": "等雾气散去"}]}, {"scene": "你感到命运卡牌的力量在召唤你", "choices": [{"label": "新手村#9-A", "type": "bless", "desc": "接受祝福"}, {"label": "新手村#9-B", "type": "heal", "desc": "吸收治愈能量"}, {"label": "新手村#9-C", "type": "treasure", "desc": "收集散落的神圣碎片"}, {"label": "新手村#9-D", "type": "nothing", "desc": "保持警惕离开"}]}, {"scene": "你捡到了一张命运卡牌", "choices": [{"label": "新手村#10-A", "type": "card", "desc": "翻开正面"}, {"label": "新手村#10-B", "type": "card", "desc": "翻开反面"}, {"label": "新手村#10-C", "type": "gold", "desc": "卖给流浪商人了"}, {"label": "新手村#10-D", "type": "nothing", "desc": "烧掉它"}]}, {"scene": "一只受伤的蝙蝠蜷缩在角落，警惕地盯着你", "choices": [{"label": "新手村#11-A", "type": "battle", "desc": "补刀结束它的痛苦"}, {"label": "新手村#11-B", "type": "heal", "desc": "给它包扎伤口"}, {"label": "新手村#11-C", "type": "intimidate", "desc": "吓跑它占它的地盘"}, {"label": "新手村#11-D", "type": "dodge", "desc": "不打扰它"}]}, {"scene": "地上散落着金币，旁边有一个落灰的书架", "choices": [{"label": "新手村#12-A", "type": "gold", "desc": "捡金币走人"}, {"label": "新手村#12-B", "type": "treasure", "desc": "冒险打开{t}"}, {"label": "新手村#12-C", "type": "dodge", "desc": "可能有陷阱，绕开"}, {"label": "新手村#12-D", "type": "safe", "desc": "用长棍试探"}]}, {"scene": "你感觉地板在震颤——火焰喷发", "choices": [{"label": "新手村#13-A", "type": "safe", "desc": "退回安全区域"}, {"label": "新手村#13-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "新手村#13-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "新手村#13-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "你感到梦境织机的力量在召唤你", "choices": [{"label": "新手村#14-A", "type": "bless", "desc": "接受祝福"}, {"label": "新手村#14-B", "type": "heal", "desc": "吸收治愈能量"}, {"label": "新手村#14-C", "type": "treasure", "desc": "收集散落的神圣碎片"}, {"label": "新手村#14-D", "type": "nothing", "desc": "保持警惕离开"}]}, {"scene": "墙壁上有一扇暗门，里面传出翻书的声音", "choices": [{"label": "新手村#15-A", "type": "battle", "desc": "冲进去——是个书灵！"}, {"label": "新手村#15-B", "type": "treasure", "desc": "悄悄查看有什么"}, {"label": "新手村#15-C", "type": "bless", "desc": "可能是个知识殿堂"}, {"label": "新手村#15-D", "type": "nothing", "desc": "不打扰读书的人"}]}, {"scene": "一只毒蝎挡在你面前，眼神凶狠", "choices": [{"label": "新手村#16-A", "type": "battle", "desc": "与毒蝎正面战斗"}, {"label": "新手村#16-B", "type": "intimidate", "desc": "大声呵斥试图吓退毒蝎"}, {"label": "新手村#16-C", "type": "dodge", "desc": "利用地形绕过去"}, {"label": "新手村#16-D", "type": "gold", "desc": "丢出5金币引开它"}]}, {"scene": "火焰中漂浮的金属匣散发着微弱的光芒", "choices": [{"label": "新手村#17-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "新手村#17-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "新手村#17-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "新手村#17-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "古老的警报响起——尖刺陷阱激活了", "choices": [{"label": "新手村#18-A", "type": "dodge", "desc": "敏捷通过"}, {"label": "新手村#18-B", "type": "safe", "desc": "找出并拆除机关"}, {"label": "新手村#18-C", "type": "intimidate", "desc": "用咒语压制魔法"}, {"label": "新手村#18-D", "type": "nothing", "desc": "原路返回"}]}, {"scene": "你感到命运卡牌的力量在召唤你", "choices": [{"label": "新手村#19-A", "type": "bless", "desc": "接受祝福"}, {"label": "新手村#19-B", "type": "heal", "desc": "吸收治愈能量"}, {"label": "新手村#19-C", "type": "treasure", "desc": "收集散落的神圣碎片"}, {"label": "新手村#19-D", "type": "nothing", "desc": "保持警惕离开"}]}, {"scene": "你遇到了一位流浪商人", "choices": [{"label": "新手村#20-A", "type": "gold", "desc": "购买生命药水(5金币)"}, {"label": "新手村#20-B", "type": "gold", "desc": "购买力量卷轴(8金币)"}, {"label": "新手村#20-C", "type": "gold", "desc": "购买护甲碎片(6金币)"}, {"label": "新手村#20-D", "type": "nothing", "desc": "不需要，谢谢"}]}, {"scene": "一只幽灵挡在你面前，眼神凶狠", "choices": [{"label": "新手村#21-A", "type": "battle", "desc": "与幽灵正面战斗"}, {"label": "新手村#21-B", "type": "intimidate", "desc": "大声呵斥试图吓退幽灵"}, {"label": "新手村#21-C", "type": "dodge", "desc": "利用地形绕过去"}, {"label": "新手村#21-D", "type": "gold", "desc": "丢出5金币引开它"}]}, {"scene": "墙壁裂缝中透出金光，冰封的宝箱卡在里面", "choices": [{"label": "新手村#22-A", "type": "treasure", "desc": "撬开获取"}, {"label": "新手村#22-B", "type": "intimidate", "desc": "大喊看会不会掉出来"}, {"label": "新手村#22-C", "type": "gold", "desc": "伸手进去摸"}, {"label": "新手村#22-D", "type": "nothing", "desc": "太窄了放弃"}]}, {"scene": "你感觉地板在震颤——地板突然塌陷", "choices": [{"label": "新手村#23-A", "type": "safe", "desc": "退回安全区域"}, {"label": "新手村#23-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "新手村#23-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "新手村#23-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "一个声音从古老祭坛中传来：\"做出选择\"", "choices": [{"label": "新手村#24-A", "type": "bless", "desc": "选择力量"}, {"label": "新手村#24-B", "type": "heal", "desc": "选择生命力"}, {"label": "新手村#24-C", "type": "card", "desc": "翻转命运卡牌"}, {"label": "新手村#24-D", "type": "nothing", "desc": "拒绝选择"}]}, {"scene": "地面上用鲜血画着一个巨大的魔法阵", "choices": [{"label": "新手村#25-A", "type": "altar", "desc": "站在阵中心献祭3金币"}, {"label": "新手村#25-B", "type": "safe", "desc": "绕开魔法阵"}, {"label": "新手村#25-C", "type": "bless", "desc": "念出铭文激活祝福"}, {"label": "新手村#25-D", "type": "dodge", "desc": "可能有陷阱快跑"}]}, {"scene": "一只幽灵挡在你面前，眼神凶狠", "choices": [{"label": "新手村#26-A", "type": "battle", "desc": "与幽灵正面战斗"}, {"label": "新手村#26-B", "type": "intimidate", "desc": "大声呵斥试图吓退幽灵"}, {"label": "新手村#26-C", "type": "dodge", "desc": "利用地形绕过去"}, {"label": "新手村#26-D", "type": "gold", "desc": "丢出5金币引开它"}]}, {"scene": "墙壁裂缝中透出金光，石棺卡在里面", "choices": [{"label": "新手村#27-A", "type": "treasure", "desc": "撬开获取"}, {"label": "新手村#27-B", "type": "intimidate", "desc": "大喊看会不会掉出来"}, {"label": "新手村#27-C", "type": "gold", "desc": "伸手进去摸"}, {"label": "新手村#27-D", "type": "nothing", "desc": "太窄了放弃"}]}, {"scene": "致幻孢子突然启动！", "choices": [{"label": "新手村#28-A", "type": "dodge", "desc": "紧急闪避"}, {"label": "新手村#28-B", "type": "safe", "desc": "趴下"}, {"label": "新手村#28-C", "type": "battle", "desc": "破坏机关源头"}, {"label": "新手村#28-D", "type": "gold", "desc": "丢金币触发机关提前释放"}]}, {"scene": "地面刻着古老祭坛的符文", "choices": [{"label": "新手村#29-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "新手村#29-B", "type": "bless", "desc": "念诵符文"}, {"label": "新手村#29-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "新手村#29-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "一只会说话的猫头鹰落在你肩膀上", "choices": [{"label": "新手村#30-A", "type": "bless", "desc": "听取它的预言"}, {"label": "新手村#30-B", "type": "gold", "desc": "给它金币换情报"}, {"label": "新手村#30-C", "type": "treasure", "desc": "跟着它找宝物"}, {"label": "新手村#30-D", "type": "nothing", "desc": "赶走它"}]}, {"scene": "一只石像鬼挡在你面前，眼神凶狠", "choices": [{"label": "新手村#31-A", "type": "battle", "desc": "与石像鬼正面战斗"}, {"label": "新手村#31-B", "type": "intimidate", "desc": "大声呵斥试图吓退石像鬼"}, {"label": "新手村#31-C", "type": "dodge", "desc": "利用地形绕过去"}, {"label": "新手村#31-D", "type": "gold", "desc": "丢出5金币引开它"}]}, {"scene": "墙壁裂缝中透出金光，落灰的书架卡在里面", "choices": [{"label": "新手村#32-A", "type": "treasure", "desc": "撬开获取"}, {"label": "新手村#32-B", "type": "intimidate", "desc": "大喊看会不会掉出来"}, {"label": "新手村#32-C", "type": "gold", "desc": "伸手进去摸"}, {"label": "新手村#32-D", "type": "nothing", "desc": "太窄了放弃"}]}, {"scene": "前方通道弥漫着可疑的雾气——致幻孢子", "choices": [{"label": "新手村#33-A", "type": "dodge", "desc": "屏住呼吸冲过去"}, {"label": "新手村#33-B", "type": "safe", "desc": "用布掩住口鼻慢行"}, {"label": "新手村#33-C", "type": "gold", "desc": "消耗3金币购买解毒草"}, {"label": "新手村#33-D", "type": "nothing", "desc": "等雾气散去"}]}, {"scene": "地面刻着古老祭坛的符文", "choices": [{"label": "新手村#34-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "新手村#34-B", "type": "bless", "desc": "念诵符文"}, {"label": "新手村#34-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "新手村#34-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "天花板滴落着发光的水滴", "choices": [{"label": "新手村#35-A", "type": "heal", "desc": "接来喝掉"}, {"label": "新手村#35-B", "type": "treasure", "desc": "收集起来卖钱"}, {"label": "新手村#35-C", "type": "safe", "desc": "先检测是否有毒"}, {"label": "新手村#35-D", "type": "nothing", "desc": "不管它"}]}, {"scene": "两只蝙蝠在分食猎物，还没注意到你", "choices": [{"label": "新手村#36-A", "type": "battle", "desc": "偷袭！先发制人"}, {"label": "新手村#36-B", "type": "dodge", "desc": "悄悄从旁边溜过去"}, {"label": "新手村#36-C", "type": "gold", "desc": "丢出3金币制造声响引开"}, {"label": "新手村#36-D", "type": "intimidate", "desc": "发出战吼震慑它们"}]}, {"scene": "黄金宝箱被藤蔓紧紧缠绕", "choices": [{"label": "新手村#37-A", "type": "battle", "desc": "砍断藤蔓——但它们有生命！"}, {"label": "新手村#37-B", "type": "gold", "desc": "用金币贿赂藤蔓"}, {"label": "新手村#37-C", "type": "treasure", "desc": "小心割开不伤藤蔓"}, {"label": "新手村#37-D", "type": "nothing", "desc": "太麻烦了放弃"}]}, {"scene": "古老的警报响起——空间扭曲激活了", "choices": [{"label": "新手村#38-A", "type": "dodge", "desc": "敏捷通过"}, {"label": "新手村#38-B", "type": "safe", "desc": "找出并拆除机关"}, {"label": "新手村#38-C", "type": "intimidate", "desc": "用咒语压制魔法"}, {"label": "新手村#38-D", "type": "nothing", "desc": "原路返回"}]}, {"scene": "地面刻着凤凰羽毛的符文", "choices": [{"label": "新手村#39-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "新手村#39-B", "type": "bless", "desc": "念诵符文"}, {"label": "新手村#39-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "新手村#39-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "塔内的温度突然骤降，空气中凝结出冰晶", "choices": [{"label": "新手村#40-A", "type": "battle", "desc": "冰元素正在成型——消灭它！"}, {"label": "新手村#40-B", "type": "safe", "desc": "生火取暖"}, {"label": "新手村#40-C", "type": "dodge", "desc": "快速跑过这片区域"}, {"label": "新手村#40-D", "type": "heal", "desc": "吃下暖身草药"}]}, {"scene": "两只史莱姆在分食猎物，还没注意到你", "choices": [{"label": "新手村#41-A", "type": "battle", "desc": "偷袭！先发制人"}, {"label": "新手村#41-B", "type": "dodge", "desc": "悄悄从旁边溜过去"}, {"label": "新手村#41-C", "type": "gold", "desc": "丢出3金币制造声响引开"}, {"label": "新手村#41-D", "type": "intimidate", "desc": "发出战吼震慑它们"}]}, {"scene": "破旧宝箱被藤蔓紧紧缠绕", "choices": [{"label": "新手村#42-A", "type": "battle", "desc": "砍断藤蔓——但它们有生命！"}, {"label": "新手村#42-B", "type": "gold", "desc": "用金币贿赂藤蔓"}, {"label": "新手村#42-C", "type": "treasure", "desc": "小心割开不伤藤蔓"}, {"label": "新手村#42-D", "type": "nothing", "desc": "太麻烦了放弃"}]}, {"scene": "藤蔓缠绕突然启动！", "choices": [{"label": "新手村#43-A", "type": "dodge", "desc": "紧急闪避"}, {"label": "新手村#43-B", "type": "safe", "desc": "趴下"}, {"label": "新手村#43-C", "type": "battle", "desc": "破坏机关源头"}, {"label": "新手村#43-D", "type": "gold", "desc": "丢金币触发机关提前释放"}]}, {"scene": "一座龙血池出现在你面前", "choices": [{"label": "新手村#44-A", "type": "bless", "desc": "虔诚祈求祝福"}, {"label": "新手村#44-B", "type": "altar", "desc": "献祭3金币换取力量"}, {"label": "新手村#44-C", "type": "gold", "desc": "拿走祭品金币"}, {"label": "新手村#44-D", "type": "nothing", "desc": "不打扰神圣之物"}]}, {"scene": "你遇到了一位流浪商人", "choices": [{"label": "新手村#45-A", "type": "gold", "desc": "购买生命药水(5金币)"}, {"label": "新手村#45-B", "type": "gold", "desc": "购买力量卷轴(8金币)"}, {"label": "新手村#45-C", "type": "gold", "desc": "购买护甲碎片(6金币)"}, {"label": "新手村#45-D", "type": "nothing", "desc": "不需要，谢谢"}]}, {"scene": "新手村的黑暗中，哥布林从天花板垂下", "choices": [{"label": "新手村#46-A", "type": "battle", "desc": "挥剑迎击"}, {"label": "新手村#46-B", "type": "dodge", "desc": "翻滚闪避"}, {"label": "新手村#46-C", "type": "gold", "desc": "扔出闪光粉制造机会"}, {"label": "新手村#46-D", "type": "intimidate", "desc": "大喊咒语驱逐"}]}, {"scene": "墙壁裂缝中透出金光，尸体旁的行囊卡在里面", "choices": [{"label": "新手村#47-A", "type": "treasure", "desc": "撬开获取"}, {"label": "新手村#47-B", "type": "intimidate", "desc": "大喊看会不会掉出来"}, {"label": "新手村#47-C", "type": "gold", "desc": "伸手进去摸"}, {"label": "新手村#47-D", "type": "nothing", "desc": "太窄了放弃"}]}, {"scene": "古老的警报响起——地板突然塌陷激活了", "choices": [{"label": "新手村#48-A", "type": "dodge", "desc": "敏捷通过"}, {"label": "新手村#48-B", "type": "safe", "desc": "找出并拆除机关"}, {"label": "新手村#48-C", "type": "intimidate", "desc": "用咒语压制魔法"}, {"label": "新手村#48-D", "type": "nothing", "desc": "原路返回"}]}, {"scene": "一个声音从命运卡牌中传来：\"做出选择\"", "choices": [{"label": "新手村#49-A", "type": "bless", "desc": "选择力量"}, {"label": "新手村#49-B", "type": "heal", "desc": "选择生命力"}, {"label": "新手村#49-C", "type": "card", "desc": "翻转命运卡牌"}, {"label": "新手村#49-D", "type": "nothing", "desc": "拒绝选择"}]}, {"scene": "塔内的温度突然骤降，空气中凝结出冰晶", "choices": [{"label": "新手村#50-A", "type": "battle", "desc": "冰元素正在成型——消灭它！"}, {"label": "新手村#50-B", "type": "safe", "desc": "生火取暖"}, {"label": "新手村#50-C", "type": "dodge", "desc": "快速跑过这片区域"}, {"label": "新手村#50-D", "type": "heal", "desc": "吃下暖身草药"}]}, {"scene": "一只受伤的幽灵蜷缩在角落，警惕地盯着你", "choices": [{"label": "新手村#51-A", "type": "battle", "desc": "补刀结束它的痛苦"}, {"label": "新手村#51-B", "type": "heal", "desc": "给它包扎伤口"}, {"label": "新手村#51-C", "type": "intimidate", "desc": "吓跑它占它的地盘"}, {"label": "新手村#51-D", "type": "dodge", "desc": "不打扰它"}]}, {"scene": "落灰的书架散发着微弱的光芒", "choices": [{"label": "新手村#52-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "新手村#52-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "新手村#52-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "新手村#52-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "你踩到了压力板，冰封地面！", "choices": [{"label": "新手村#53-A", "type": "dodge", "desc": "翻滚闪避"}, {"label": "新手村#53-B", "type": "safe", "desc": "原地不动可能更安全"}, {"label": "新手村#53-C", "type": "battle", "desc": "硬扛冲过去"}, {"label": "新手村#53-D", "type": "nothing", "desc": "后退另寻路线"}]}, {"scene": "你感到命运卡牌的力量在召唤你", "choices": [{"label": "新手村#54-A", "type": "bless", "desc": "接受祝福"}, {"label": "新手村#54-B", "type": "heal", "desc": "吸收治愈能量"}, {"label": "新手村#54-C", "type": "treasure", "desc": "收集散落的神圣碎片"}, {"label": "新手村#54-D", "type": "nothing", "desc": "保持警惕离开"}]}, {"scene": "一只会说话的猫头鹰落在你肩膀上", "choices": [{"label": "新手村#55-A", "type": "bless", "desc": "听取它的预言"}, {"label": "新手村#55-B", "type": "gold", "desc": "给它金币换情报"}, {"label": "新手村#55-C", "type": "treasure", "desc": "跟着它找宝物"}, {"label": "新手村#55-D", "type": "nothing", "desc": "赶走它"}]}, {"scene": "两只史莱姆在分食猎物，还没注意到你", "choices": [{"label": "新手村#56-A", "type": "battle", "desc": "偷袭！先发制人"}, {"label": "新手村#56-B", "type": "dodge", "desc": "悄悄从旁边溜过去"}, {"label": "新手村#56-C", "type": "gold", "desc": "丢出3金币制造声响引开"}, {"label": "新手村#56-D", "type": "intimidate", "desc": "发出战吼震慑它们"}]}, {"scene": "你发现了一个生锈的盔甲，看起来有些年头了", "choices": [{"label": "新手村#57-A", "type": "treasure", "desc": "小心打开它"}, {"label": "新手村#57-B", "type": "gold", "desc": "粗暴砸开，可能损坏内容物"}, {"label": "新手村#57-C", "type": "dodge", "desc": "先检查有没有陷阱再开"}, {"label": "新手村#57-D", "type": "nothing", "desc": "太可疑了，无视它"}]}, {"scene": "你感觉地板在震颤——藤蔓缠绕", "choices": [{"label": "新手村#58-A", "type": "safe", "desc": "退回安全区域"}, {"label": "新手村#58-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "新手村#58-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "新手村#58-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "一只石像鬼王挡在你面前，眼神凶狠", "choices": [{"label": "暗影大厅#1-A", "type": "battle", "desc": "与石像鬼王正面战斗"}, {"label": "暗影大厅#1-B", "type": "intimidate", "desc": "大声呵斥试图吓退石像鬼王"}, {"label": "暗影大厅#1-C", "type": "dodge", "desc": "利用地形绕过去"}, {"label": "暗影大厅#1-D", "type": "gold", "desc": "丢出5金币引开它"}]}, {"scene": "你发现了一个墙壁暗格，看起来有些年头了", "choices": [{"label": "暗影大厅#2-A", "type": "treasure", "desc": "小心打开它"}, {"label": "暗影大厅#2-B", "type": "gold", "desc": "粗暴砸开，可能损坏内容物"}, {"label": "暗影大厅#2-C", "type": "dodge", "desc": "先检查有没有陷阱再开"}, {"label": "暗影大厅#2-D", "type": "nothing", "desc": "太可疑了，无视它"}]}, {"scene": "你感觉地板在震颤——魔法符文爆炸", "choices": [{"label": "暗影大厅#3-A", "type": "safe", "desc": "退回安全区域"}, {"label": "暗影大厅#3-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "暗影大厅#3-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "暗影大厅#3-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "一座女神雕像出现在你面前", "choices": [{"label": "暗影大厅#4-A", "type": "bless", "desc": "虔诚祈求祝福"}, {"label": "暗影大厅#4-B", "type": "altar", "desc": "献祭3金币换取力量"}, {"label": "暗影大厅#4-C", "type": "gold", "desc": "拿走祭品金币"}, {"label": "暗影大厅#4-D", "type": "nothing", "desc": "不打扰神圣之物"}]}, {"scene": "天花板滴落着发光的水滴", "choices": [{"label": "暗影大厅#5-A", "type": "heal", "desc": "接来喝掉"}, {"label": "暗影大厅#5-B", "type": "treasure", "desc": "收集起来卖钱"}, {"label": "暗影大厅#5-C", "type": "safe", "desc": "先检测是否有毒"}, {"label": "暗影大厅#5-D", "type": "nothing", "desc": "不管它"}]}, {"scene": "一只石像鬼王挡在你面前，眼神凶狠", "choices": [{"label": "暗影大厅#6-A", "type": "battle", "desc": "与石像鬼王正面战斗"}, {"label": "暗影大厅#6-B", "type": "intimidate", "desc": "大声呵斥试图吓退石像鬼王"}, {"label": "暗影大厅#6-C", "type": "dodge", "desc": "利用地形绕过去"}, {"label": "暗影大厅#6-D", "type": "gold", "desc": "丢出5金币引开它"}]}, {"scene": "你发现了一个墙壁暗格，看起来有些年头了", "choices": [{"label": "暗影大厅#7-A", "type": "treasure", "desc": "小心打开它"}, {"label": "暗影大厅#7-B", "type": "gold", "desc": "粗暴砸开，可能损坏内容物"}, {"label": "暗影大厅#7-C", "type": "dodge", "desc": "先检查有没有陷阱再开"}, {"label": "暗影大厅#7-D", "type": "nothing", "desc": "太可疑了，无视它"}]}, {"scene": "前方通道弥漫着可疑的雾气——火焰喷发", "choices": [{"label": "暗影大厅#8-A", "type": "dodge", "desc": "屏住呼吸冲过去"}, {"label": "暗影大厅#8-B", "type": "safe", "desc": "用布掩住口鼻慢行"}, {"label": "暗影大厅#8-C", "type": "gold", "desc": "消耗3金币购买解毒草"}, {"label": "暗影大厅#8-D", "type": "nothing", "desc": "等雾气散去"}]}, {"scene": "一座圣光喷泉出现在你面前", "choices": [{"label": "暗影大厅#9-A", "type": "bless", "desc": "虔诚祈求祝福"}, {"label": "暗影大厅#9-B", "type": "altar", "desc": "献祭3金币换取力量"}, {"label": "暗影大厅#9-C", "type": "gold", "desc": "拿走祭品金币"}, {"label": "暗影大厅#9-D", "type": "nothing", "desc": "不打扰神圣之物"}]}, {"scene": "一个被铁链锁住的宝箱在抖动", "choices": [{"label": "暗影大厅#10-A", "type": "battle", "desc": "打开宝箱——里面封印着怪物！"}, {"label": "暗影大厅#10-B", "type": "treasure", "desc": "小心撬锁"}, {"label": "暗影大厅#10-C", "type": "gold", "desc": "晃动宝箱倒出金币"}, {"label": "暗影大厅#10-D", "type": "nothing", "desc": "太可疑了不理它"}]}, {"scene": "一只受伤的史莱姆蜷缩在角落，警惕地盯着你", "choices": [{"label": "暗影大厅#11-A", "type": "battle", "desc": "补刀结束它的痛苦"}, {"label": "暗影大厅#11-B", "type": "heal", "desc": "给它包扎伤口"}, {"label": "暗影大厅#11-C", "type": "intimidate", "desc": "吓跑它占它的地盘"}, {"label": "暗影大厅#11-D", "type": "dodge", "desc": "不打扰它"}]}, {"scene": "你发现了一个倒吊的布袋，看起来有些年头了", "choices": [{"label": "暗影大厅#12-A", "type": "treasure", "desc": "小心打开它"}, {"label": "暗影大厅#12-B", "type": "gold", "desc": "粗暴砸开，可能损坏内容物"}, {"label": "暗影大厅#12-C", "type": "dodge", "desc": "先检查有没有陷阱再开"}, {"label": "暗影大厅#12-D", "type": "nothing", "desc": "太可疑了，无视它"}]}, {"scene": "幻象迷宫突然启动！", "choices": [{"label": "暗影大厅#13-A", "type": "dodge", "desc": "紧急闪避"}, {"label": "暗影大厅#13-B", "type": "safe", "desc": "趴下"}, {"label": "暗影大厅#13-C", "type": "battle", "desc": "破坏机关源头"}, {"label": "暗影大厅#13-D", "type": "gold", "desc": "丢金币触发机关提前释放"}]}, {"scene": "圣光喷泉悬浮在空中，散发着柔和的光芒", "choices": [{"label": "暗影大厅#14-A", "type": "bless", "desc": "触摸它"}, {"label": "暗影大厅#14-B", "type": "altar", "desc": "献上1点生命换取智慧"}, {"label": "暗影大厅#14-C", "type": "gold", "desc": "试图捡走地上的贡品"}, {"label": "暗影大厅#14-D", "type": "dodge", "desc": "可能是个陷阱"}]}, {"scene": "一只会说话的猫头鹰落在你肩膀上", "choices": [{"label": "暗影大厅#15-A", "type": "bless", "desc": "听取它的预言"}, {"label": "暗影大厅#15-B", "type": "gold", "desc": "给它金币换情报"}, {"label": "暗影大厅#15-C", "type": "treasure", "desc": "跟着它找宝物"}, {"label": "暗影大厅#15-D", "type": "nothing", "desc": "赶走它"}]}, {"scene": "暗影大厅的黑暗中，冰霜蜥蜴从天花板垂下", "choices": [{"label": "暗影大厅#16-A", "type": "battle", "desc": "挥剑迎击"}, {"label": "暗影大厅#16-B", "type": "dodge", "desc": "翻滚闪避"}, {"label": "暗影大厅#16-C", "type": "gold", "desc": "扔出闪光粉制造机会"}, {"label": "暗影大厅#16-D", "type": "intimidate", "desc": "大喊咒语驱逐"}]}, {"scene": "石棺被藤蔓紧紧缠绕", "choices": [{"label": "暗影大厅#17-A", "type": "battle", "desc": "砍断藤蔓——但它们有生命！"}, {"label": "暗影大厅#17-B", "type": "gold", "desc": "用金币贿赂藤蔓"}, {"label": "暗影大厅#17-C", "type": "treasure", "desc": "小心割开不伤藤蔓"}, {"label": "暗影大厅#17-D", "type": "nothing", "desc": "太麻烦了放弃"}]}, {"scene": "你踩到了压力板，火焰喷发！", "choices": [{"label": "暗影大厅#18-A", "type": "dodge", "desc": "翻滚闪避"}, {"label": "暗影大厅#18-B", "type": "safe", "desc": "原地不动可能更安全"}, {"label": "暗影大厅#18-C", "type": "battle", "desc": "硬扛冲过去"}, {"label": "暗影大厅#18-D", "type": "nothing", "desc": "后退另寻路线"}]}, {"scene": "时间沙漏悬浮在空中，散发着柔和的光芒", "choices": [{"label": "暗影大厅#19-A", "type": "bless", "desc": "触摸它"}, {"label": "暗影大厅#19-B", "type": "altar", "desc": "献上1点生命换取智慧"}, {"label": "暗影大厅#19-C", "type": "gold", "desc": "试图捡走地上的贡品"}, {"label": "暗影大厅#19-D", "type": "dodge", "desc": "可能是个陷阱"}]}, {"scene": "一个被铁链锁住的宝箱在抖动", "choices": [{"label": "暗影大厅#20-A", "type": "battle", "desc": "打开宝箱——里面封印着怪物！"}, {"label": "暗影大厅#20-B", "type": "treasure", "desc": "小心撬锁"}, {"label": "暗影大厅#20-C", "type": "gold", "desc": "晃动宝箱倒出金币"}, {"label": "暗影大厅#20-D", "type": "nothing", "desc": "太可疑了不理它"}]}, {"scene": "暗影大厅的黑暗中，魅魔从天花板垂下", "choices": [{"label": "暗影大厅#21-A", "type": "battle", "desc": "挥剑迎击"}, {"label": "暗影大厅#21-B", "type": "dodge", "desc": "翻滚闪避"}, {"label": "暗影大厅#21-C", "type": "gold", "desc": "扔出闪光粉制造机会"}, {"label": "暗影大厅#21-D", "type": "intimidate", "desc": "大喊咒语驱逐"}]}, {"scene": "水潭底部散发着微弱的光芒", "choices": [{"label": "暗影大厅#22-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "暗影大厅#22-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "暗影大厅#22-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "暗影大厅#22-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "吸魂光环突然启动！", "choices": [{"label": "暗影大厅#23-A", "type": "dodge", "desc": "紧急闪避"}, {"label": "暗影大厅#23-B", "type": "safe", "desc": "趴下"}, {"label": "暗影大厅#23-C", "type": "battle", "desc": "破坏机关源头"}, {"label": "暗影大厅#23-D", "type": "gold", "desc": "丢金币触发机关提前释放"}]}, {"scene": "你感到梦境织机的力量在召唤你", "choices": [{"label": "暗影大厅#24-A", "type": "bless", "desc": "接受祝福"}, {"label": "暗影大厅#24-B", "type": "heal", "desc": "吸收治愈能量"}, {"label": "暗影大厅#24-C", "type": "treasure", "desc": "收集散落的神圣碎片"}, {"label": "暗影大厅#24-D", "type": "nothing", "desc": "保持警惕离开"}]}, {"scene": "天花板滴落着发光的水滴", "choices": [{"label": "暗影大厅#25-A", "type": "heal", "desc": "接来喝掉"}, {"label": "暗影大厅#25-B", "type": "treasure", "desc": "收集起来卖钱"}, {"label": "暗影大厅#25-C", "type": "safe", "desc": "先检测是否有毒"}, {"label": "暗影大厅#25-D", "type": "nothing", "desc": "不管它"}]}, {"scene": "两只史莱姆在分食猎物，还没注意到你", "choices": [{"label": "暗影大厅#26-A", "type": "battle", "desc": "偷袭！先发制人"}, {"label": "暗影大厅#26-B", "type": "dodge", "desc": "悄悄从旁边溜过去"}, {"label": "暗影大厅#26-C", "type": "gold", "desc": "丢出3金币制造声响引开"}, {"label": "暗影大厅#26-D", "type": "intimidate", "desc": "发出战吼震慑它们"}]}, {"scene": "地上散落着金币，旁边有一个尸体旁的行囊", "choices": [{"label": "暗影大厅#27-A", "type": "gold", "desc": "捡金币走人"}, {"label": "暗影大厅#27-B", "type": "treasure", "desc": "冒险打开{t}"}, {"label": "暗影大厅#27-C", "type": "dodge", "desc": "可能有陷阱，绕开"}, {"label": "暗影大厅#27-D", "type": "safe", "desc": "用长棍试探"}]}, {"scene": "古老的警报响起——藤蔓缠绕激活了", "choices": [{"label": "暗影大厅#28-A", "type": "dodge", "desc": "敏捷通过"}, {"label": "暗影大厅#28-B", "type": "safe", "desc": "找出并拆除机关"}, {"label": "暗影大厅#28-C", "type": "intimidate", "desc": "用咒语压制魔法"}, {"label": "暗影大厅#28-D", "type": "nothing", "desc": "原路返回"}]}, {"scene": "地面刻着女神雕像的符文", "choices": [{"label": "暗影大厅#29-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "暗影大厅#29-B", "type": "bless", "desc": "念诵符文"}, {"label": "暗影大厅#29-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "暗影大厅#29-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "塔内的温度突然骤降，空气中凝结出冰晶", "choices": [{"label": "暗影大厅#30-A", "type": "battle", "desc": "冰元素正在成型——消灭它！"}, {"label": "暗影大厅#30-B", "type": "safe", "desc": "生火取暖"}, {"label": "暗影大厅#30-C", "type": "dodge", "desc": "快速跑过这片区域"}, {"label": "暗影大厅#30-D", "type": "heal", "desc": "吃下暖身草药"}]}, {"scene": "暗影大厅的黑暗中，魅魔从天花板垂下", "choices": [{"label": "暗影大厅#31-A", "type": "battle", "desc": "挥剑迎击"}, {"label": "暗影大厅#31-B", "type": "dodge", "desc": "翻滚闪避"}, {"label": "暗影大厅#31-C", "type": "gold", "desc": "扔出闪光粉制造机会"}, {"label": "暗影大厅#31-D", "type": "intimidate", "desc": "大喊咒语驱逐"}]}, {"scene": "落灰的书架散发着微弱的光芒", "choices": [{"label": "暗影大厅#32-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "暗影大厅#32-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "暗影大厅#32-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "暗影大厅#32-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "古老的警报响起——藤蔓缠绕激活了", "choices": [{"label": "暗影大厅#33-A", "type": "dodge", "desc": "敏捷通过"}, {"label": "暗影大厅#33-B", "type": "safe", "desc": "找出并拆除机关"}, {"label": "暗影大厅#33-C", "type": "intimidate", "desc": "用咒语压制魔法"}, {"label": "暗影大厅#33-D", "type": "nothing", "desc": "原路返回"}]}, {"scene": "一座圣光喷泉出现在你面前", "choices": [{"label": "暗影大厅#34-A", "type": "bless", "desc": "虔诚祈求祝福"}, {"label": "暗影大厅#34-B", "type": "altar", "desc": "献祭3金币换取力量"}, {"label": "暗影大厅#34-C", "type": "gold", "desc": "拿走祭品金币"}, {"label": "暗影大厅#34-D", "type": "nothing", "desc": "不打扰神圣之物"}]}, {"scene": "塔内的温度突然骤降，空气中凝结出冰晶", "choices": [{"label": "暗影大厅#35-A", "type": "battle", "desc": "冰元素正在成型——消灭它！"}, {"label": "暗影大厅#35-B", "type": "safe", "desc": "生火取暖"}, {"label": "暗影大厅#35-C", "type": "dodge", "desc": "快速跑过这片区域"}, {"label": "暗影大厅#35-D", "type": "heal", "desc": "吃下暖身草药"}]}, {"scene": "暗影大厅的黑暗中，水晶蜘蛛从天花板垂下", "choices": [{"label": "暗影大厅#36-A", "type": "battle", "desc": "挥剑迎击"}, {"label": "暗影大厅#36-B", "type": "dodge", "desc": "翻滚闪避"}, {"label": "暗影大厅#36-C", "type": "gold", "desc": "扔出闪光粉制造机会"}, {"label": "暗影大厅#36-D", "type": "intimidate", "desc": "大喊咒语驱逐"}]}, {"scene": "地上散落着金币，旁边有一个落灰的书架", "choices": [{"label": "暗影大厅#37-A", "type": "gold", "desc": "捡金币走人"}, {"label": "暗影大厅#37-B", "type": "treasure", "desc": "冒险打开{t}"}, {"label": "暗影大厅#37-C", "type": "dodge", "desc": "可能有陷阱，绕开"}, {"label": "暗影大厅#37-D", "type": "safe", "desc": "用长棍试探"}]}, {"scene": "你感觉地板在震颤——幻象迷宫", "choices": [{"label": "暗影大厅#38-A", "type": "safe", "desc": "退回安全区域"}, {"label": "暗影大厅#38-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "暗影大厅#38-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "暗影大厅#38-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "一个声音从贤者之书中传来：\"做出选择\"", "choices": [{"label": "暗影大厅#39-A", "type": "bless", "desc": "选择力量"}, {"label": "暗影大厅#39-B", "type": "heal", "desc": "选择生命力"}, {"label": "暗影大厅#39-C", "type": "card", "desc": "翻转命运卡牌"}, {"label": "暗影大厅#39-D", "type": "nothing", "desc": "拒绝选择"}]}, {"scene": "一只会说话的猫头鹰落在你肩膀上", "choices": [{"label": "暗影大厅#40-A", "type": "bless", "desc": "听取它的预言"}, {"label": "暗影大厅#40-B", "type": "gold", "desc": "给它金币换情报"}, {"label": "暗影大厅#40-C", "type": "treasure", "desc": "跟着它找宝物"}, {"label": "暗影大厅#40-D", "type": "nothing", "desc": "赶走它"}]}, {"scene": "一只受伤的火焰精灵蜷缩在角落，警惕地盯着你", "choices": [{"label": "暗影大厅#41-A", "type": "battle", "desc": "补刀结束它的痛苦"}, {"label": "暗影大厅#41-B", "type": "heal", "desc": "给它包扎伤口"}, {"label": "暗影大厅#41-C", "type": "intimidate", "desc": "吓跑它占它的地盘"}, {"label": "暗影大厅#41-D", "type": "dodge", "desc": "不打扰它"}]}, {"scene": "裂缝中透出金光散发着微弱的光芒", "choices": [{"label": "暗影大厅#42-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "暗影大厅#42-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "暗影大厅#42-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "暗影大厅#42-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "你感觉地板在震颤——尖刺陷阱", "choices": [{"label": "暗影大厅#43-A", "type": "safe", "desc": "退回安全区域"}, {"label": "暗影大厅#43-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "暗影大厅#43-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "暗影大厅#43-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "一座命运卡牌出现在你面前", "choices": [{"label": "暗影大厅#44-A", "type": "bless", "desc": "虔诚祈求祝福"}, {"label": "暗影大厅#44-B", "type": "altar", "desc": "献祭3金币换取力量"}, {"label": "暗影大厅#44-C", "type": "gold", "desc": "拿走祭品金币"}, {"label": "暗影大厅#44-D", "type": "nothing", "desc": "不打扰神圣之物"}]}, {"scene": "你听到了奇怪的歌声从远处飘来...", "choices": [{"label": "暗影大厅#45-A", "type": "battle", "desc": "循声而去——是塞壬！"}, {"label": "暗影大厅#45-B", "type": "dodge", "desc": "捂住耳朵绕开"}, {"label": "暗影大厅#45-C", "type": "bless", "desc": "歌声似乎有治愈之力"}, {"label": "暗影大厅#45-D", "type": "nothing", "desc": "无视它继续前进"}]}, {"scene": "一只虚空触须挡在你面前，眼神凶狠", "choices": [{"label": "暗影大厅#46-A", "type": "battle", "desc": "与虚空触须正面战斗"}, {"label": "暗影大厅#46-B", "type": "intimidate", "desc": "大声呵斥试图吓退虚空触须"}, {"label": "暗影大厅#46-C", "type": "dodge", "desc": "利用地形绕过去"}, {"label": "暗影大厅#46-D", "type": "gold", "desc": "丢出5金币引开它"}]}, {"scene": "地上散落着金币，旁边有一个尸体旁的行囊", "choices": [{"label": "暗影大厅#47-A", "type": "gold", "desc": "捡金币走人"}, {"label": "暗影大厅#47-B", "type": "treasure", "desc": "冒险打开{t}"}, {"label": "暗影大厅#47-C", "type": "dodge", "desc": "可能有陷阱，绕开"}, {"label": "暗影大厅#47-D", "type": "safe", "desc": "用长棍试探"}]}, {"scene": "你感觉地板在震颤——幻象迷宫", "choices": [{"label": "暗影大厅#48-A", "type": "safe", "desc": "退回安全区域"}, {"label": "暗影大厅#48-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "暗影大厅#48-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "暗影大厅#48-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "一座女神雕像出现在你面前", "choices": [{"label": "暗影大厅#49-A", "type": "bless", "desc": "虔诚祈求祝福"}, {"label": "暗影大厅#49-B", "type": "altar", "desc": "献祭3金币换取力量"}, {"label": "暗影大厅#49-C", "type": "gold", "desc": "拿走祭品金币"}, {"label": "暗影大厅#49-D", "type": "nothing", "desc": "不打扰神圣之物"}]}, {"scene": "你发现了一具冒险者的遗骸", "choices": [{"label": "暗影大厅#50-A", "type": "treasure", "desc": "搜刮遗物"}, {"label": "暗影大厅#50-B", "type": "gold", "desc": "安葬他获得祝福"}, {"label": "暗影大厅#50-C", "type": "safe", "desc": "阅读他的日志"}, {"label": "暗影大厅#50-D", "type": "nothing", "desc": "默哀后离开"}]}, {"scene": "两只雷鸟在分食猎物，还没注意到你", "choices": [{"label": "暗影大厅#51-A", "type": "battle", "desc": "偷袭！先发制人"}, {"label": "暗影大厅#51-B", "type": "dodge", "desc": "悄悄从旁边溜过去"}, {"label": "暗影大厅#51-C", "type": "gold", "desc": "丢出3金币制造声响引开"}, {"label": "暗影大厅#51-D", "type": "intimidate", "desc": "发出战吼震慑它们"}]}, {"scene": "尸体旁的行囊散发着微弱的光芒", "choices": [{"label": "暗影大厅#52-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "暗影大厅#52-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "暗影大厅#52-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "暗影大厅#52-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "藤蔓缠绕突然启动！", "choices": [{"label": "暗影大厅#53-A", "type": "dodge", "desc": "紧急闪避"}, {"label": "暗影大厅#53-B", "type": "safe", "desc": "趴下"}, {"label": "暗影大厅#53-C", "type": "battle", "desc": "破坏机关源头"}, {"label": "暗影大厅#53-D", "type": "gold", "desc": "丢金币触发机关提前释放"}]}, {"scene": "一个声音从女神雕像中传来：\"做出选择\"", "choices": [{"label": "暗影大厅#54-A", "type": "bless", "desc": "选择力量"}, {"label": "暗影大厅#54-B", "type": "heal", "desc": "选择生命力"}, {"label": "暗影大厅#54-C", "type": "card", "desc": "翻转命运卡牌"}, {"label": "暗影大厅#54-D", "type": "nothing", "desc": "拒绝选择"}]}, {"scene": "塔内的温度突然骤降，空气中凝结出冰晶", "choices": [{"label": "暗影大厅#55-A", "type": "battle", "desc": "冰元素正在成型——消灭它！"}, {"label": "暗影大厅#55-B", "type": "safe", "desc": "生火取暖"}, {"label": "暗影大厅#55-C", "type": "dodge", "desc": "快速跑过这片区域"}, {"label": "暗影大厅#55-D", "type": "heal", "desc": "吃下暖身草药"}]}, {"scene": "怨灵正在守护一个发光的物体", "choices": [{"label": "暗影大厅#56-A", "type": "battle", "desc": "打败{m}夺取宝物"}, {"label": "暗影大厅#56-B", "type": "dodge", "desc": "吸引{m}注意力后绕开"}, {"label": "暗影大厅#56-C", "type": "gold", "desc": "用金币交换"}, {"label": "暗影大厅#56-D", "type": "intimidate", "desc": "虚张声势吓跑它"}]}, {"scene": "尸体旁的行囊散发着微弱的光芒", "choices": [{"label": "暗影大厅#57-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "暗影大厅#57-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "暗影大厅#57-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "暗影大厅#57-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "前方通道弥漫着可疑的雾气——幻象迷宫", "choices": [{"label": "暗影大厅#58-A", "type": "dodge", "desc": "屏住呼吸冲过去"}, {"label": "暗影大厅#58-B", "type": "safe", "desc": "用布掩住口鼻慢行"}, {"label": "暗影大厅#58-C", "type": "gold", "desc": "消耗3金币购买解毒草"}, {"label": "暗影大厅#58-D", "type": "nothing", "desc": "等雾气散去"}]}, {"scene": "一只受伤的血月狼人蜷缩在角落，警惕地盯着你", "choices": [{"label": "深渊回廊#1-A", "type": "battle", "desc": "补刀结束它的痛苦"}, {"label": "深渊回廊#1-B", "type": "heal", "desc": "给它包扎伤口"}, {"label": "深渊回廊#1-C", "type": "intimidate", "desc": "吓跑它占它的地盘"}, {"label": "深渊回廊#1-D", "type": "dodge", "desc": "不打扰它"}]}, {"scene": "你发现了一个倒吊的布袋，看起来有些年头了", "choices": [{"label": "深渊回廊#2-A", "type": "treasure", "desc": "小心打开它"}, {"label": "深渊回廊#2-B", "type": "gold", "desc": "粗暴砸开，可能损坏内容物"}, {"label": "深渊回廊#2-C", "type": "dodge", "desc": "先检查有没有陷阱再开"}, {"label": "深渊回廊#2-D", "type": "nothing", "desc": "太可疑了，无视它"}]}, {"scene": "古老的警报响起——地板突然塌陷激活了", "choices": [{"label": "深渊回廊#3-A", "type": "dodge", "desc": "敏捷通过"}, {"label": "深渊回廊#3-B", "type": "safe", "desc": "找出并拆除机关"}, {"label": "深渊回廊#3-C", "type": "intimidate", "desc": "用咒语压制魔法"}, {"label": "深渊回廊#3-D", "type": "nothing", "desc": "原路返回"}]}, {"scene": "地面刻着龙血池的符文", "choices": [{"label": "深渊回廊#4-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "深渊回廊#4-B", "type": "bless", "desc": "念诵符文"}, {"label": "深渊回廊#4-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "深渊回廊#4-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "地面上用鲜血画着一个巨大的魔法阵", "choices": [{"label": "深渊回廊#5-A", "type": "altar", "desc": "站在阵中心献祭3金币"}, {"label": "深渊回廊#5-B", "type": "safe", "desc": "绕开魔法阵"}, {"label": "深渊回廊#5-C", "type": "bless", "desc": "念出铭文激活祝福"}, {"label": "深渊回廊#5-D", "type": "dodge", "desc": "可能有陷阱快跑"}]}, {"scene": "深渊回廊的黑暗中，荆棘女王从天花板垂下", "choices": [{"label": "深渊回廊#6-A", "type": "battle", "desc": "挥剑迎击"}, {"label": "深渊回廊#6-B", "type": "dodge", "desc": "翻滚闪避"}, {"label": "深渊回廊#6-C", "type": "gold", "desc": "扔出闪光粉制造机会"}, {"label": "深渊回廊#6-D", "type": "intimidate", "desc": "大喊咒语驱逐"}]}, {"scene": "地砖下凹被藤蔓紧紧缠绕", "choices": [{"label": "深渊回廊#7-A", "type": "battle", "desc": "砍断藤蔓——但它们有生命！"}, {"label": "深渊回廊#7-B", "type": "gold", "desc": "用金币贿赂藤蔓"}, {"label": "深渊回廊#7-C", "type": "treasure", "desc": "小心割开不伤藤蔓"}, {"label": "深渊回廊#7-D", "type": "nothing", "desc": "太麻烦了放弃"}]}, {"scene": "你感觉地板在震颤——魔法符文爆炸", "choices": [{"label": "深渊回廊#8-A", "type": "safe", "desc": "退回安全区域"}, {"label": "深渊回廊#8-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "深渊回廊#8-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "深渊回廊#8-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "一个声音从生命树苗中传来：\"做出选择\"", "choices": [{"label": "深渊回廊#9-A", "type": "bless", "desc": "选择力量"}, {"label": "深渊回廊#9-B", "type": "heal", "desc": "选择生命力"}, {"label": "深渊回廊#9-C", "type": "card", "desc": "翻转命运卡牌"}, {"label": "深渊回廊#9-D", "type": "nothing", "desc": "拒绝选择"}]}, {"scene": "天花板滴落着发光的水滴", "choices": [{"label": "深渊回廊#10-A", "type": "heal", "desc": "接来喝掉"}, {"label": "深渊回廊#10-B", "type": "treasure", "desc": "收集起来卖钱"}, {"label": "深渊回廊#10-C", "type": "safe", "desc": "先检测是否有毒"}, {"label": "深渊回廊#10-D", "type": "nothing", "desc": "不管它"}]}, {"scene": "两只魅魔在分食猎物，还没注意到你", "choices": [{"label": "深渊回廊#11-A", "type": "battle", "desc": "偷袭！先发制人"}, {"label": "深渊回廊#11-B", "type": "dodge", "desc": "悄悄从旁边溜过去"}, {"label": "深渊回廊#11-C", "type": "gold", "desc": "丢出3金币制造声响引开"}, {"label": "深渊回廊#11-D", "type": "intimidate", "desc": "发出战吼震慑它们"}]}, {"scene": "裂缝中透出金光散发着微弱的光芒", "choices": [{"label": "深渊回廊#12-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "深渊回廊#12-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "深渊回廊#12-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "深渊回廊#12-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "你踩到了压力板，空间扭曲！", "choices": [{"label": "深渊回廊#13-A", "type": "dodge", "desc": "翻滚闪避"}, {"label": "深渊回廊#13-B", "type": "safe", "desc": "原地不动可能更安全"}, {"label": "深渊回廊#13-C", "type": "battle", "desc": "硬扛冲过去"}, {"label": "深渊回廊#13-D", "type": "nothing", "desc": "后退另寻路线"}]}, {"scene": "你感到生命树苗的力量在召唤你", "choices": [{"label": "深渊回廊#14-A", "type": "bless", "desc": "接受祝福"}, {"label": "深渊回廊#14-B", "type": "heal", "desc": "吸收治愈能量"}, {"label": "深渊回廊#14-C", "type": "treasure", "desc": "收集散落的神圣碎片"}, {"label": "深渊回廊#14-D", "type": "nothing", "desc": "保持警惕离开"}]}, {"scene": "天花板滴落着发光的水滴", "choices": [{"label": "深渊回廊#15-A", "type": "heal", "desc": "接来喝掉"}, {"label": "深渊回廊#15-B", "type": "treasure", "desc": "收集起来卖钱"}, {"label": "深渊回廊#15-C", "type": "safe", "desc": "先检测是否有毒"}, {"label": "深渊回廊#15-D", "type": "nothing", "desc": "不管它"}]}, {"scene": "一只受伤的石像鬼王蜷缩在角落，警惕地盯着你", "choices": [{"label": "深渊回廊#16-A", "type": "battle", "desc": "补刀结束它的痛苦"}, {"label": "深渊回廊#16-B", "type": "heal", "desc": "给它包扎伤口"}, {"label": "深渊回廊#16-C", "type": "intimidate", "desc": "吓跑它占它的地盘"}, {"label": "深渊回廊#16-D", "type": "dodge", "desc": "不打扰它"}]}, {"scene": "倒吊的布袋散发着微弱的光芒", "choices": [{"label": "深渊回廊#17-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "深渊回廊#17-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "深渊回廊#17-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "深渊回廊#17-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "古老的警报响起——毒气弥漫激活了", "choices": [{"label": "深渊回廊#18-A", "type": "dodge", "desc": "敏捷通过"}, {"label": "深渊回廊#18-B", "type": "safe", "desc": "找出并拆除机关"}, {"label": "深渊回廊#18-C", "type": "intimidate", "desc": "用咒语压制魔法"}, {"label": "深渊回廊#18-D", "type": "nothing", "desc": "原路返回"}]}, {"scene": "贤者之书悬浮在空中，散发着柔和的光芒", "choices": [{"label": "深渊回廊#19-A", "type": "bless", "desc": "触摸它"}, {"label": "深渊回廊#19-B", "type": "altar", "desc": "献上1点生命换取智慧"}, {"label": "深渊回廊#19-C", "type": "gold", "desc": "试图捡走地上的贡品"}, {"label": "深渊回廊#19-D", "type": "dodge", "desc": "可能是个陷阱"}]}, {"scene": "地面上用鲜血画着一个巨大的魔法阵", "choices": [{"label": "深渊回廊#20-A", "type": "altar", "desc": "站在阵中心献祭3金币"}, {"label": "深渊回廊#20-B", "type": "safe", "desc": "绕开魔法阵"}, {"label": "深渊回廊#20-C", "type": "bless", "desc": "念出铭文激活祝福"}, {"label": "深渊回廊#20-D", "type": "dodge", "desc": "可能有陷阱快跑"}]}, {"scene": "深渊回廊的黑暗中，血月狼人从天花板垂下", "choices": [{"label": "深渊回廊#21-A", "type": "battle", "desc": "挥剑迎击"}, {"label": "深渊回廊#21-B", "type": "dodge", "desc": "翻滚闪避"}, {"label": "深渊回廊#21-C", "type": "gold", "desc": "扔出闪光粉制造机会"}, {"label": "深渊回廊#21-D", "type": "intimidate", "desc": "大喊咒语驱逐"}]}, {"scene": "地上散落着金币，旁边有一个裂缝中透出金光", "choices": [{"label": "深渊回廊#22-A", "type": "gold", "desc": "捡金币走人"}, {"label": "深渊回廊#22-B", "type": "treasure", "desc": "冒险打开{t}"}, {"label": "深渊回廊#22-C", "type": "dodge", "desc": "可能有陷阱，绕开"}, {"label": "深渊回廊#22-D", "type": "safe", "desc": "用长棍试探"}]}, {"scene": "你感觉地板在震颤——幻象迷宫", "choices": [{"label": "深渊回廊#23-A", "type": "safe", "desc": "退回安全区域"}, {"label": "深渊回廊#23-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "深渊回廊#23-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "深渊回廊#23-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "地面刻着时间沙漏的符文", "choices": [{"label": "深渊回廊#24-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "深渊回廊#24-B", "type": "bless", "desc": "念诵符文"}, {"label": "深渊回廊#24-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "深渊回廊#24-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "你捡到了一张命运卡牌", "choices": [{"label": "深渊回廊#25-A", "type": "card", "desc": "翻开正面"}, {"label": "深渊回廊#25-B", "type": "card", "desc": "翻开反面"}, {"label": "深渊回廊#25-C", "type": "gold", "desc": "卖给流浪商人了"}, {"label": "深渊回廊#25-D", "type": "nothing", "desc": "烧掉它"}]}, {"scene": "一只虚空触须挡在你面前，眼神凶狠", "choices": [{"label": "深渊回廊#26-A", "type": "battle", "desc": "与虚空触须正面战斗"}, {"label": "深渊回廊#26-B", "type": "intimidate", "desc": "大声呵斥试图吓退虚空触须"}, {"label": "深渊回廊#26-C", "type": "dodge", "desc": "利用地形绕过去"}, {"label": "深渊回廊#26-D", "type": "gold", "desc": "丢出5金币引开它"}]}, {"scene": "墙壁裂缝中透出金光，蛛网后的暗门卡在里面", "choices": [{"label": "深渊回廊#27-A", "type": "treasure", "desc": "撬开获取"}, {"label": "深渊回廊#27-B", "type": "intimidate", "desc": "大喊看会不会掉出来"}, {"label": "深渊回廊#27-C", "type": "gold", "desc": "伸手进去摸"}, {"label": "深渊回廊#27-D", "type": "nothing", "desc": "太窄了放弃"}]}, {"scene": "你踩到了压力板，藤蔓缠绕！", "choices": [{"label": "深渊回廊#28-A", "type": "dodge", "desc": "翻滚闪避"}, {"label": "深渊回廊#28-B", "type": "safe", "desc": "原地不动可能更安全"}, {"label": "深渊回廊#28-C", "type": "battle", "desc": "硬扛冲过去"}, {"label": "深渊回廊#28-D", "type": "nothing", "desc": "后退另寻路线"}]}, {"scene": "地面刻着生命树苗的符文", "choices": [{"label": "深渊回廊#29-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "深渊回廊#29-B", "type": "bless", "desc": "念诵符文"}, {"label": "深渊回廊#29-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "深渊回廊#29-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "一个被铁链锁住的宝箱在抖动", "choices": [{"label": "深渊回廊#30-A", "type": "battle", "desc": "打开宝箱——里面封印着怪物！"}, {"label": "深渊回廊#30-B", "type": "treasure", "desc": "小心撬锁"}, {"label": "深渊回廊#30-C", "type": "gold", "desc": "晃动宝箱倒出金币"}, {"label": "深渊回廊#30-D", "type": "nothing", "desc": "太可疑了不理它"}]}, {"scene": "两只时间窃贼在分食猎物，还没注意到你", "choices": [{"label": "深渊回廊#31-A", "type": "battle", "desc": "偷袭！先发制人"}, {"label": "深渊回廊#31-B", "type": "dodge", "desc": "悄悄从旁边溜过去"}, {"label": "深渊回廊#31-C", "type": "gold", "desc": "丢出3金币制造声响引开"}, {"label": "深渊回廊#31-D", "type": "intimidate", "desc": "发出战吼震慑它们"}]}, {"scene": "裂缝中透出金光被藤蔓紧紧缠绕", "choices": [{"label": "深渊回廊#32-A", "type": "battle", "desc": "砍断藤蔓——但它们有生命！"}, {"label": "深渊回廊#32-B", "type": "gold", "desc": "用金币贿赂藤蔓"}, {"label": "深渊回廊#32-C", "type": "treasure", "desc": "小心割开不伤藤蔓"}, {"label": "深渊回廊#32-D", "type": "nothing", "desc": "太麻烦了放弃"}]}, {"scene": "你踩到了压力板，魔法符文爆炸！", "choices": [{"label": "深渊回廊#33-A", "type": "dodge", "desc": "翻滚闪避"}, {"label": "深渊回廊#33-B", "type": "safe", "desc": "原地不动可能更安全"}, {"label": "深渊回廊#33-C", "type": "battle", "desc": "硬扛冲过去"}, {"label": "深渊回廊#33-D", "type": "nothing", "desc": "后退另寻路线"}]}, {"scene": "一个声音从时间沙漏中传来：\"做出选择\"", "choices": [{"label": "深渊回廊#34-A", "type": "bless", "desc": "选择力量"}, {"label": "深渊回廊#34-B", "type": "heal", "desc": "选择生命力"}, {"label": "深渊回廊#34-C", "type": "card", "desc": "翻转命运卡牌"}, {"label": "深渊回廊#34-D", "type": "nothing", "desc": "拒绝选择"}]}, {"scene": "塔内的温度突然骤降，空气中凝结出冰晶", "choices": [{"label": "深渊回廊#35-A", "type": "battle", "desc": "冰元素正在成型——消灭它！"}, {"label": "深渊回廊#35-B", "type": "safe", "desc": "生火取暖"}, {"label": "深渊回廊#35-C", "type": "dodge", "desc": "快速跑过这片区域"}, {"label": "深渊回廊#35-D", "type": "heal", "desc": "吃下暖身草药"}]}, {"scene": "一只受伤的荆棘女王蜷缩在角落，警惕地盯着你", "choices": [{"label": "深渊回廊#36-A", "type": "battle", "desc": "补刀结束它的痛苦"}, {"label": "深渊回廊#36-B", "type": "heal", "desc": "给它包扎伤口"}, {"label": "深渊回廊#36-C", "type": "intimidate", "desc": "吓跑它占它的地盘"}, {"label": "深渊回廊#36-D", "type": "dodge", "desc": "不打扰它"}]}, {"scene": "地砖下凹被藤蔓紧紧缠绕", "choices": [{"label": "深渊回廊#37-A", "type": "battle", "desc": "砍断藤蔓——但它们有生命！"}, {"label": "深渊回廊#37-B", "type": "gold", "desc": "用金币贿赂藤蔓"}, {"label": "深渊回廊#37-C", "type": "treasure", "desc": "小心割开不伤藤蔓"}, {"label": "深渊回廊#37-D", "type": "nothing", "desc": "太麻烦了放弃"}]}, {"scene": "天花板砸下巨石突然启动！", "choices": [{"label": "深渊回廊#38-A", "type": "dodge", "desc": "紧急闪避"}, {"label": "深渊回廊#38-B", "type": "safe", "desc": "趴下"}, {"label": "深渊回廊#38-C", "type": "battle", "desc": "破坏机关源头"}, {"label": "深渊回廊#38-D", "type": "gold", "desc": "丢金币触发机关提前释放"}]}, {"scene": "地面刻着月井的符文", "choices": [{"label": "深渊回廊#39-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "深渊回廊#39-B", "type": "bless", "desc": "念诵符文"}, {"label": "深渊回廊#39-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "深渊回廊#39-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "你捡到了一张命运卡牌", "choices": [{"label": "深渊回廊#40-A", "type": "card", "desc": "翻开正面"}, {"label": "深渊回廊#40-B", "type": "card", "desc": "翻开反面"}, {"label": "深渊回廊#40-C", "type": "gold", "desc": "卖给流浪商人了"}, {"label": "深渊回廊#40-D", "type": "nothing", "desc": "烧掉它"}]}, {"scene": "深渊回廊的黑暗中，时间窃贼从天花板垂下", "choices": [{"label": "深渊回廊#41-A", "type": "battle", "desc": "挥剑迎击"}, {"label": "深渊回廊#41-B", "type": "dodge", "desc": "翻滚闪避"}, {"label": "深渊回廊#41-C", "type": "gold", "desc": "扔出闪光粉制造机会"}, {"label": "深渊回廊#41-D", "type": "intimidate", "desc": "大喊咒语驱逐"}]}, {"scene": "你发现了一个火焰中漂浮的金属匣，看起来有些年头了", "choices": [{"label": "深渊回廊#42-A", "type": "treasure", "desc": "小心打开它"}, {"label": "深渊回廊#42-B", "type": "gold", "desc": "粗暴砸开，可能损坏内容物"}, {"label": "深渊回廊#42-C", "type": "dodge", "desc": "先检查有没有陷阱再开"}, {"label": "深渊回廊#42-D", "type": "nothing", "desc": "太可疑了，无视它"}]}, {"scene": "前方通道弥漫着可疑的雾气——暗影分身袭击", "choices": [{"label": "深渊回廊#43-A", "type": "dodge", "desc": "屏住呼吸冲过去"}, {"label": "深渊回廊#43-B", "type": "safe", "desc": "用布掩住口鼻慢行"}, {"label": "深渊回廊#43-C", "type": "gold", "desc": "消耗3金币购买解毒草"}, {"label": "深渊回廊#43-D", "type": "nothing", "desc": "等雾气散去"}]}, {"scene": "凤凰羽毛悬浮在空中，散发着柔和的光芒", "choices": [{"label": "深渊回廊#44-A", "type": "bless", "desc": "触摸它"}, {"label": "深渊回廊#44-B", "type": "altar", "desc": "献上1点生命换取智慧"}, {"label": "深渊回廊#44-C", "type": "gold", "desc": "试图捡走地上的贡品"}, {"label": "深渊回廊#44-D", "type": "dodge", "desc": "可能是个陷阱"}]}, {"scene": "你发现了一具冒险者的遗骸", "choices": [{"label": "深渊回廊#45-A", "type": "treasure", "desc": "搜刮遗物"}, {"label": "深渊回廊#45-B", "type": "gold", "desc": "安葬他获得祝福"}, {"label": "深渊回廊#45-C", "type": "safe", "desc": "阅读他的日志"}, {"label": "深渊回廊#45-D", "type": "nothing", "desc": "默哀后离开"}]}, {"scene": "深渊回廊的黑暗中，石像鬼王从天花板垂下", "choices": [{"label": "深渊回廊#46-A", "type": "battle", "desc": "挥剑迎击"}, {"label": "深渊回廊#46-B", "type": "dodge", "desc": "翻滚闪避"}, {"label": "深渊回廊#46-C", "type": "gold", "desc": "扔出闪光粉制造机会"}, {"label": "深渊回廊#46-D", "type": "intimidate", "desc": "大喊咒语驱逐"}]}, {"scene": "地上散落着金币，旁边有一个裂缝中透出金光", "choices": [{"label": "深渊回廊#47-A", "type": "gold", "desc": "捡金币走人"}, {"label": "深渊回廊#47-B", "type": "treasure", "desc": "冒险打开{t}"}, {"label": "深渊回廊#47-C", "type": "dodge", "desc": "可能有陷阱，绕开"}, {"label": "深渊回廊#47-D", "type": "safe", "desc": "用长棍试探"}]}, {"scene": "你感觉地板在震颤——尖刺陷阱", "choices": [{"label": "深渊回廊#48-A", "type": "safe", "desc": "退回安全区域"}, {"label": "深渊回廊#48-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "深渊回廊#48-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "深渊回廊#48-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "一座时间沙漏出现在你面前", "choices": [{"label": "深渊回廊#49-A", "type": "bless", "desc": "虔诚祈求祝福"}, {"label": "深渊回廊#49-B", "type": "altar", "desc": "献祭3金币换取力量"}, {"label": "深渊回廊#49-C", "type": "gold", "desc": "拿走祭品金币"}, {"label": "深渊回廊#49-D", "type": "nothing", "desc": "不打扰神圣之物"}]}, {"scene": "塔内的温度突然骤降，空气中凝结出冰晶", "choices": [{"label": "深渊回廊#50-A", "type": "battle", "desc": "冰元素正在成型——消灭它！"}, {"label": "深渊回廊#50-B", "type": "safe", "desc": "生火取暖"}, {"label": "深渊回廊#50-C", "type": "dodge", "desc": "快速跑过这片区域"}, {"label": "深渊回廊#50-D", "type": "heal", "desc": "吃下暖身草药"}]}, {"scene": "一只受伤的血月狼人蜷缩在角落，警惕地盯着你", "choices": [{"label": "深渊回廊#51-A", "type": "battle", "desc": "补刀结束它的痛苦"}, {"label": "深渊回廊#51-B", "type": "heal", "desc": "给它包扎伤口"}, {"label": "深渊回廊#51-C", "type": "intimidate", "desc": "吓跑它占它的地盘"}, {"label": "深渊回廊#51-D", "type": "dodge", "desc": "不打扰它"}]}, {"scene": "你发现了一个生锈的盔甲，看起来有些年头了", "choices": [{"label": "深渊回廊#52-A", "type": "treasure", "desc": "小心打开它"}, {"label": "深渊回廊#52-B", "type": "gold", "desc": "粗暴砸开，可能损坏内容物"}, {"label": "深渊回廊#52-C", "type": "dodge", "desc": "先检查有没有陷阱再开"}, {"label": "深渊回廊#52-D", "type": "nothing", "desc": "太可疑了，无视它"}]}, {"scene": "你踩到了压力板，吸魂光环！", "choices": [{"label": "深渊回廊#53-A", "type": "dodge", "desc": "翻滚闪避"}, {"label": "深渊回廊#53-B", "type": "safe", "desc": "原地不动可能更安全"}, {"label": "深渊回廊#53-C", "type": "battle", "desc": "硬扛冲过去"}, {"label": "深渊回廊#53-D", "type": "nothing", "desc": "后退另寻路线"}]}, {"scene": "地面刻着占星台的符文", "choices": [{"label": "深渊回廊#54-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "深渊回廊#54-B", "type": "bless", "desc": "念诵符文"}, {"label": "深渊回廊#54-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "深渊回廊#54-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "你听到了奇怪的歌声从远处飘来...", "choices": [{"label": "深渊回廊#55-A", "type": "battle", "desc": "循声而去——是塞壬！"}, {"label": "深渊回廊#55-B", "type": "dodge", "desc": "捂住耳朵绕开"}, {"label": "深渊回廊#55-C", "type": "bless", "desc": "歌声似乎有治愈之力"}, {"label": "深渊回廊#55-D", "type": "nothing", "desc": "无视它继续前进"}]}, {"scene": "一只血月狼人挡在你面前，眼神凶狠", "choices": [{"label": "深渊回廊#56-A", "type": "battle", "desc": "与血月狼人正面战斗"}, {"label": "深渊回廊#56-B", "type": "intimidate", "desc": "大声呵斥试图吓退血月狼人"}, {"label": "深渊回廊#56-C", "type": "dodge", "desc": "利用地形绕过去"}, {"label": "深渊回廊#56-D", "type": "gold", "desc": "丢出5金币引开它"}]}, {"scene": "冰封的宝箱散发着微弱的光芒", "choices": [{"label": "深渊回廊#57-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "深渊回廊#57-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "深渊回廊#57-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "深渊回廊#57-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "你踩到了压力板，雷电劈落！", "choices": [{"label": "深渊回廊#58-A", "type": "dodge", "desc": "翻滚闪避"}, {"label": "深渊回廊#58-B", "type": "safe", "desc": "原地不动可能更安全"}, {"label": "深渊回廊#58-C", "type": "battle", "desc": "硬扛冲过去"}, {"label": "深渊回廊#58-D", "type": "nothing", "desc": "后退另寻路线"}]}, {"scene": "雷电之魂正在守护一个发光的物体", "choices": [{"label": "诅咒迷宫#1-A", "type": "battle", "desc": "打败{m}夺取宝物"}, {"label": "诅咒迷宫#1-B", "type": "dodge", "desc": "吸引{m}注意力后绕开"}, {"label": "诅咒迷宫#1-C", "type": "gold", "desc": "用金币交换"}, {"label": "诅咒迷宫#1-D", "type": "intimidate", "desc": "虚张声势吓跑它"}]}, {"scene": "生锈的盔甲散发着微弱的光芒", "choices": [{"label": "诅咒迷宫#2-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "诅咒迷宫#2-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "诅咒迷宫#2-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "诅咒迷宫#2-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "致幻孢子突然启动！", "choices": [{"label": "诅咒迷宫#3-A", "type": "dodge", "desc": "紧急闪避"}, {"label": "诅咒迷宫#3-B", "type": "safe", "desc": "趴下"}, {"label": "诅咒迷宫#3-C", "type": "battle", "desc": "破坏机关源头"}, {"label": "诅咒迷宫#3-D", "type": "gold", "desc": "丢金币触发机关提前释放"}]}, {"scene": "你感到龙血池的力量在召唤你", "choices": [{"label": "诅咒迷宫#4-A", "type": "bless", "desc": "接受祝福"}, {"label": "诅咒迷宫#4-B", "type": "heal", "desc": "吸收治愈能量"}, {"label": "诅咒迷宫#4-C", "type": "treasure", "desc": "收集散落的神圣碎片"}, {"label": "诅咒迷宫#4-D", "type": "nothing", "desc": "保持警惕离开"}]}, {"scene": "墙壁上有一扇暗门，里面传出翻书的声音", "choices": [{"label": "诅咒迷宫#5-A", "type": "battle", "desc": "冲进去——是个书灵！"}, {"label": "诅咒迷宫#5-B", "type": "treasure", "desc": "悄悄查看有什么"}, {"label": "诅咒迷宫#5-C", "type": "bless", "desc": "可能是个知识殿堂"}, {"label": "诅咒迷宫#5-D", "type": "nothing", "desc": "不打扰读书的人"}]}, {"scene": "两只岩石魔像在分食猎物，还没注意到你", "choices": [{"label": "诅咒迷宫#6-A", "type": "battle", "desc": "偷袭！先发制人"}, {"label": "诅咒迷宫#6-B", "type": "dodge", "desc": "悄悄从旁边溜过去"}, {"label": "诅咒迷宫#6-C", "type": "gold", "desc": "丢出3金币制造声响引开"}, {"label": "诅咒迷宫#6-D", "type": "intimidate", "desc": "发出战吼震慑它们"}]}, {"scene": "水潭底部被藤蔓紧紧缠绕", "choices": [{"label": "诅咒迷宫#7-A", "type": "battle", "desc": "砍断藤蔓——但它们有生命！"}, {"label": "诅咒迷宫#7-B", "type": "gold", "desc": "用金币贿赂藤蔓"}, {"label": "诅咒迷宫#7-C", "type": "treasure", "desc": "小心割开不伤藤蔓"}, {"label": "诅咒迷宫#7-D", "type": "nothing", "desc": "太麻烦了放弃"}]}, {"scene": "藤蔓缠绕突然启动！", "choices": [{"label": "诅咒迷宫#8-A", "type": "dodge", "desc": "紧急闪避"}, {"label": "诅咒迷宫#8-B", "type": "safe", "desc": "趴下"}, {"label": "诅咒迷宫#8-C", "type": "battle", "desc": "破坏机关源头"}, {"label": "诅咒迷宫#8-D", "type": "gold", "desc": "丢金币触发机关提前释放"}]}, {"scene": "一座贤者之书出现在你面前", "choices": [{"label": "诅咒迷宫#9-A", "type": "bless", "desc": "虔诚祈求祝福"}, {"label": "诅咒迷宫#9-B", "type": "altar", "desc": "献祭3金币换取力量"}, {"label": "诅咒迷宫#9-C", "type": "gold", "desc": "拿走祭品金币"}, {"label": "诅咒迷宫#9-D", "type": "nothing", "desc": "不打扰神圣之物"}]}, {"scene": "地面上用鲜血画着一个巨大的魔法阵", "choices": [{"label": "诅咒迷宫#10-A", "type": "altar", "desc": "站在阵中心献祭3金币"}, {"label": "诅咒迷宫#10-B", "type": "safe", "desc": "绕开魔法阵"}, {"label": "诅咒迷宫#10-C", "type": "bless", "desc": "念出铭文激活祝福"}, {"label": "诅咒迷宫#10-D", "type": "dodge", "desc": "可能有陷阱快跑"}]}, {"scene": "一只黄金史莱姆挡在你面前，眼神凶狠", "choices": [{"label": "诅咒迷宫#11-A", "type": "battle", "desc": "与黄金史莱姆正面战斗"}, {"label": "诅咒迷宫#11-B", "type": "intimidate", "desc": "大声呵斥试图吓退黄金史莱姆"}, {"label": "诅咒迷宫#11-C", "type": "dodge", "desc": "利用地形绕过去"}, {"label": "诅咒迷宫#11-D", "type": "gold", "desc": "丢出5金币引开它"}]}, {"scene": "你发现了一个水潭底部，看起来有些年头了", "choices": [{"label": "诅咒迷宫#12-A", "type": "treasure", "desc": "小心打开它"}, {"label": "诅咒迷宫#12-B", "type": "gold", "desc": "粗暴砸开，可能损坏内容物"}, {"label": "诅咒迷宫#12-C", "type": "dodge", "desc": "先检查有没有陷阱再开"}, {"label": "诅咒迷宫#12-D", "type": "nothing", "desc": "太可疑了，无视它"}]}, {"scene": "你感觉地板在震颤——幻象迷宫", "choices": [{"label": "诅咒迷宫#13-A", "type": "safe", "desc": "退回安全区域"}, {"label": "诅咒迷宫#13-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "诅咒迷宫#13-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "诅咒迷宫#13-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "地面刻着贤者之书的符文", "choices": [{"label": "诅咒迷宫#14-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "诅咒迷宫#14-B", "type": "bless", "desc": "念诵符文"}, {"label": "诅咒迷宫#14-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "诅咒迷宫#14-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "一只会说话的猫头鹰落在你肩膀上", "choices": [{"label": "诅咒迷宫#15-A", "type": "bless", "desc": "听取它的预言"}, {"label": "诅咒迷宫#15-B", "type": "gold", "desc": "给它金币换情报"}, {"label": "诅咒迷宫#15-C", "type": "treasure", "desc": "跟着它找宝物"}, {"label": "诅咒迷宫#15-D", "type": "nothing", "desc": "赶走它"}]}, {"scene": "食人花正在守护一个发光的物体", "choices": [{"label": "诅咒迷宫#16-A", "type": "battle", "desc": "打败{m}夺取宝物"}, {"label": "诅咒迷宫#16-B", "type": "dodge", "desc": "吸引{m}注意力后绕开"}, {"label": "诅咒迷宫#16-C", "type": "gold", "desc": "用金币交换"}, {"label": "诅咒迷宫#16-D", "type": "intimidate", "desc": "虚张声势吓跑它"}]}, {"scene": "地上散落着金币，旁边有一个蛛网后的暗门", "choices": [{"label": "诅咒迷宫#17-A", "type": "gold", "desc": "捡金币走人"}, {"label": "诅咒迷宫#17-B", "type": "treasure", "desc": "冒险打开{t}"}, {"label": "诅咒迷宫#17-C", "type": "dodge", "desc": "可能有陷阱，绕开"}, {"label": "诅咒迷宫#17-D", "type": "safe", "desc": "用长棍试探"}]}, {"scene": "你感觉地板在震颤——暗影分身袭击", "choices": [{"label": "诅咒迷宫#18-A", "type": "safe", "desc": "退回安全区域"}, {"label": "诅咒迷宫#18-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "诅咒迷宫#18-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "诅咒迷宫#18-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "一座梦境织机出现在你面前", "choices": [{"label": "诅咒迷宫#19-A", "type": "bless", "desc": "虔诚祈求祝福"}, {"label": "诅咒迷宫#19-B", "type": "altar", "desc": "献祭3金币换取力量"}, {"label": "诅咒迷宫#19-C", "type": "gold", "desc": "拿走祭品金币"}, {"label": "诅咒迷宫#19-D", "type": "nothing", "desc": "不打扰神圣之物"}]}, {"scene": "你听到了奇怪的歌声从远处飘来...", "choices": [{"label": "诅咒迷宫#20-A", "type": "battle", "desc": "循声而去——是塞壬！"}, {"label": "诅咒迷宫#20-B", "type": "dodge", "desc": "捂住耳朵绕开"}, {"label": "诅咒迷宫#20-C", "type": "bless", "desc": "歌声似乎有治愈之力"}, {"label": "诅咒迷宫#20-D", "type": "nothing", "desc": "无视它继续前进"}]}, {"scene": "诅咒迷宫的黑暗中，食人花从天花板垂下", "choices": [{"label": "诅咒迷宫#21-A", "type": "battle", "desc": "挥剑迎击"}, {"label": "诅咒迷宫#21-B", "type": "dodge", "desc": "翻滚闪避"}, {"label": "诅咒迷宫#21-C", "type": "gold", "desc": "扔出闪光粉制造机会"}, {"label": "诅咒迷宫#21-D", "type": "intimidate", "desc": "大喊咒语驱逐"}]}, {"scene": "你发现了一个生锈的盔甲，看起来有些年头了", "choices": [{"label": "诅咒迷宫#22-A", "type": "treasure", "desc": "小心打开它"}, {"label": "诅咒迷宫#22-B", "type": "gold", "desc": "粗暴砸开，可能损坏内容物"}, {"label": "诅咒迷宫#22-C", "type": "dodge", "desc": "先检查有没有陷阱再开"}, {"label": "诅咒迷宫#22-D", "type": "nothing", "desc": "太可疑了，无视它"}]}, {"scene": "吸魂光环突然启动！", "choices": [{"label": "诅咒迷宫#23-A", "type": "dodge", "desc": "紧急闪避"}, {"label": "诅咒迷宫#23-B", "type": "safe", "desc": "趴下"}, {"label": "诅咒迷宫#23-C", "type": "battle", "desc": "破坏机关源头"}, {"label": "诅咒迷宫#23-D", "type": "gold", "desc": "丢金币触发机关提前释放"}]}, {"scene": "一个声音从生命树苗中传来：\"做出选择\"", "choices": [{"label": "诅咒迷宫#24-A", "type": "bless", "desc": "选择力量"}, {"label": "诅咒迷宫#24-B", "type": "heal", "desc": "选择生命力"}, {"label": "诅咒迷宫#24-C", "type": "card", "desc": "翻转命运卡牌"}, {"label": "诅咒迷宫#24-D", "type": "nothing", "desc": "拒绝选择"}]}, {"scene": "天花板滴落着发光的水滴", "choices": [{"label": "诅咒迷宫#25-A", "type": "heal", "desc": "接来喝掉"}, {"label": "诅咒迷宫#25-B", "type": "treasure", "desc": "收集起来卖钱"}, {"label": "诅咒迷宫#25-C", "type": "safe", "desc": "先检测是否有毒"}, {"label": "诅咒迷宫#25-D", "type": "nothing", "desc": "不管它"}]}, {"scene": "冰晶凤凰正在守护一个发光的物体", "choices": [{"label": "诅咒迷宫#26-A", "type": "battle", "desc": "打败{m}夺取宝物"}, {"label": "诅咒迷宫#26-B", "type": "dodge", "desc": "吸引{m}注意力后绕开"}, {"label": "诅咒迷宫#26-C", "type": "gold", "desc": "用金币交换"}, {"label": "诅咒迷宫#26-D", "type": "intimidate", "desc": "虚张声势吓跑它"}]}, {"scene": "地上散落着金币，旁边有一个火焰中漂浮的金属匣", "choices": [{"label": "诅咒迷宫#27-A", "type": "gold", "desc": "捡金币走人"}, {"label": "诅咒迷宫#27-B", "type": "treasure", "desc": "冒险打开{t}"}, {"label": "诅咒迷宫#27-C", "type": "dodge", "desc": "可能有陷阱，绕开"}, {"label": "诅咒迷宫#27-D", "type": "safe", "desc": "用长棍试探"}]}, {"scene": "暗影分身袭击突然启动！", "choices": [{"label": "诅咒迷宫#28-A", "type": "dodge", "desc": "紧急闪避"}, {"label": "诅咒迷宫#28-B", "type": "safe", "desc": "趴下"}, {"label": "诅咒迷宫#28-C", "type": "battle", "desc": "破坏机关源头"}, {"label": "诅咒迷宫#28-D", "type": "gold", "desc": "丢金币触发机关提前释放"}]}, {"scene": "一座龙血池出现在你面前", "choices": [{"label": "诅咒迷宫#29-A", "type": "bless", "desc": "虔诚祈求祝福"}, {"label": "诅咒迷宫#29-B", "type": "altar", "desc": "献祭3金币换取力量"}, {"label": "诅咒迷宫#29-C", "type": "gold", "desc": "拿走祭品金币"}, {"label": "诅咒迷宫#29-D", "type": "nothing", "desc": "不打扰神圣之物"}]}, {"scene": "你捡到了一张命运卡牌", "choices": [{"label": "诅咒迷宫#30-A", "type": "card", "desc": "翻开正面"}, {"label": "诅咒迷宫#30-B", "type": "card", "desc": "翻开反面"}, {"label": "诅咒迷宫#30-C", "type": "gold", "desc": "卖给流浪商人了"}, {"label": "诅咒迷宫#30-D", "type": "nothing", "desc": "烧掉它"}]}, {"scene": "一只时空裂虫挡在你面前，眼神凶狠", "choices": [{"label": "诅咒迷宫#31-A", "type": "battle", "desc": "与时空裂虫正面战斗"}, {"label": "诅咒迷宫#31-B", "type": "intimidate", "desc": "大声呵斥试图吓退时空裂虫"}, {"label": "诅咒迷宫#31-C", "type": "dodge", "desc": "利用地形绕过去"}, {"label": "诅咒迷宫#31-D", "type": "gold", "desc": "丢出5金币引开它"}]}, {"scene": "水潭底部散发着微弱的光芒", "choices": [{"label": "诅咒迷宫#32-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "诅咒迷宫#32-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "诅咒迷宫#32-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "诅咒迷宫#32-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "前方通道弥漫着可疑的雾气——雷电劈落", "choices": [{"label": "诅咒迷宫#33-A", "type": "dodge", "desc": "屏住呼吸冲过去"}, {"label": "诅咒迷宫#33-B", "type": "safe", "desc": "用布掩住口鼻慢行"}, {"label": "诅咒迷宫#33-C", "type": "gold", "desc": "消耗3金币购买解毒草"}, {"label": "诅咒迷宫#33-D", "type": "nothing", "desc": "等雾气散去"}]}, {"scene": "一座月井出现在你面前", "choices": [{"label": "诅咒迷宫#34-A", "type": "bless", "desc": "虔诚祈求祝福"}, {"label": "诅咒迷宫#34-B", "type": "altar", "desc": "献祭3金币换取力量"}, {"label": "诅咒迷宫#34-C", "type": "gold", "desc": "拿走祭品金币"}, {"label": "诅咒迷宫#34-D", "type": "nothing", "desc": "不打扰神圣之物"}]}, {"scene": "你听到了奇怪的歌声从远处飘来...", "choices": [{"label": "诅咒迷宫#35-A", "type": "battle", "desc": "循声而去——是塞壬！"}, {"label": "诅咒迷宫#35-B", "type": "dodge", "desc": "捂住耳朵绕开"}, {"label": "诅咒迷宫#35-C", "type": "bless", "desc": "歌声似乎有治愈之力"}, {"label": "诅咒迷宫#35-D", "type": "nothing", "desc": "无视它继续前进"}]}, {"scene": "一只镜中魅影挡在你面前，眼神凶狠", "choices": [{"label": "诅咒迷宫#36-A", "type": "battle", "desc": "与镜中魅影正面战斗"}, {"label": "诅咒迷宫#36-B", "type": "intimidate", "desc": "大声呵斥试图吓退镜中魅影"}, {"label": "诅咒迷宫#36-C", "type": "dodge", "desc": "利用地形绕过去"}, {"label": "诅咒迷宫#36-D", "type": "gold", "desc": "丢出5金币引开它"}]}, {"scene": "墙壁裂缝中透出金光，水潭底部卡在里面", "choices": [{"label": "诅咒迷宫#37-A", "type": "treasure", "desc": "撬开获取"}, {"label": "诅咒迷宫#37-B", "type": "intimidate", "desc": "大喊看会不会掉出来"}, {"label": "诅咒迷宫#37-C", "type": "gold", "desc": "伸手进去摸"}, {"label": "诅咒迷宫#37-D", "type": "nothing", "desc": "太窄了放弃"}]}, {"scene": "古老的警报响起——地板突然塌陷激活了", "choices": [{"label": "诅咒迷宫#38-A", "type": "dodge", "desc": "敏捷通过"}, {"label": "诅咒迷宫#38-B", "type": "safe", "desc": "找出并拆除机关"}, {"label": "诅咒迷宫#38-C", "type": "intimidate", "desc": "用咒语压制魔法"}, {"label": "诅咒迷宫#38-D", "type": "nothing", "desc": "原路返回"}]}, {"scene": "一座龙血池出现在你面前", "choices": [{"label": "诅咒迷宫#39-A", "type": "bless", "desc": "虔诚祈求祝福"}, {"label": "诅咒迷宫#39-B", "type": "altar", "desc": "献祭3金币换取力量"}, {"label": "诅咒迷宫#39-C", "type": "gold", "desc": "拿走祭品金币"}, {"label": "诅咒迷宫#39-D", "type": "nothing", "desc": "不打扰神圣之物"}]}, {"scene": "一个被铁链锁住的宝箱在抖动", "choices": [{"label": "诅咒迷宫#40-A", "type": "battle", "desc": "打开宝箱——里面封印着怪物！"}, {"label": "诅咒迷宫#40-B", "type": "treasure", "desc": "小心撬锁"}, {"label": "诅咒迷宫#40-C", "type": "gold", "desc": "晃动宝箱倒出金币"}, {"label": "诅咒迷宫#40-D", "type": "nothing", "desc": "太可疑了不理它"}]}, {"scene": "两只岩石魔像在分食猎物，还没注意到你", "choices": [{"label": "诅咒迷宫#41-A", "type": "battle", "desc": "偷袭！先发制人"}, {"label": "诅咒迷宫#41-B", "type": "dodge", "desc": "悄悄从旁边溜过去"}, {"label": "诅咒迷宫#41-C", "type": "gold", "desc": "丢出3金币制造声响引开"}, {"label": "诅咒迷宫#41-D", "type": "intimidate", "desc": "发出战吼震慑它们"}]}, {"scene": "生锈的盔甲散发着微弱的光芒", "choices": [{"label": "诅咒迷宫#42-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "诅咒迷宫#42-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "诅咒迷宫#42-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "诅咒迷宫#42-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "你踩到了压力板，火焰喷发！", "choices": [{"label": "诅咒迷宫#43-A", "type": "dodge", "desc": "翻滚闪避"}, {"label": "诅咒迷宫#43-B", "type": "safe", "desc": "原地不动可能更安全"}, {"label": "诅咒迷宫#43-C", "type": "battle", "desc": "硬扛冲过去"}, {"label": "诅咒迷宫#43-D", "type": "nothing", "desc": "后退另寻路线"}]}, {"scene": "生命树苗悬浮在空中，散发着柔和的光芒", "choices": [{"label": "诅咒迷宫#44-A", "type": "bless", "desc": "触摸它"}, {"label": "诅咒迷宫#44-B", "type": "altar", "desc": "献上1点生命换取智慧"}, {"label": "诅咒迷宫#44-C", "type": "gold", "desc": "试图捡走地上的贡品"}, {"label": "诅咒迷宫#44-D", "type": "dodge", "desc": "可能是个陷阱"}]}, {"scene": "一只会说话的猫头鹰落在你肩膀上", "choices": [{"label": "诅咒迷宫#45-A", "type": "bless", "desc": "听取它的预言"}, {"label": "诅咒迷宫#45-B", "type": "gold", "desc": "给它金币换情报"}, {"label": "诅咒迷宫#45-C", "type": "treasure", "desc": "跟着它找宝物"}, {"label": "诅咒迷宫#45-D", "type": "nothing", "desc": "赶走它"}]}, {"scene": "两只食人花在分食猎物，还没注意到你", "choices": [{"label": "诅咒迷宫#46-A", "type": "battle", "desc": "偷袭！先发制人"}, {"label": "诅咒迷宫#46-B", "type": "dodge", "desc": "悄悄从旁边溜过去"}, {"label": "诅咒迷宫#46-C", "type": "gold", "desc": "丢出3金币制造声响引开"}, {"label": "诅咒迷宫#46-D", "type": "intimidate", "desc": "发出战吼震慑它们"}]}, {"scene": "藤蔓缠绕的箱子散发着微弱的光芒", "choices": [{"label": "诅咒迷宫#47-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "诅咒迷宫#47-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "诅咒迷宫#47-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "诅咒迷宫#47-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "前方通道弥漫着可疑的雾气——火焰喷发", "choices": [{"label": "诅咒迷宫#48-A", "type": "dodge", "desc": "屏住呼吸冲过去"}, {"label": "诅咒迷宫#48-B", "type": "safe", "desc": "用布掩住口鼻慢行"}, {"label": "诅咒迷宫#48-C", "type": "gold", "desc": "消耗3金币购买解毒草"}, {"label": "诅咒迷宫#48-D", "type": "nothing", "desc": "等雾气散去"}]}, {"scene": "地面刻着凤凰羽毛的符文", "choices": [{"label": "诅咒迷宫#49-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "诅咒迷宫#49-B", "type": "bless", "desc": "念诵符文"}, {"label": "诅咒迷宫#49-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "诅咒迷宫#49-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "墙壁上有一扇暗门，里面传出翻书的声音", "choices": [{"label": "诅咒迷宫#50-A", "type": "battle", "desc": "冲进去——是个书灵！"}, {"label": "诅咒迷宫#50-B", "type": "treasure", "desc": "悄悄查看有什么"}, {"label": "诅咒迷宫#50-C", "type": "bless", "desc": "可能是个知识殿堂"}, {"label": "诅咒迷宫#50-D", "type": "nothing", "desc": "不打扰读书的人"}]}, {"scene": "一只暗影主教挡在你面前，眼神凶狠", "choices": [{"label": "诅咒迷宫#51-A", "type": "battle", "desc": "与暗影主教正面战斗"}, {"label": "诅咒迷宫#51-B", "type": "intimidate", "desc": "大声呵斥试图吓退暗影主教"}, {"label": "诅咒迷宫#51-C", "type": "dodge", "desc": "利用地形绕过去"}, {"label": "诅咒迷宫#51-D", "type": "gold", "desc": "丢出5金币引开它"}]}, {"scene": "地上散落着金币，旁边有一个黄金宝箱", "choices": [{"label": "诅咒迷宫#52-A", "type": "gold", "desc": "捡金币走人"}, {"label": "诅咒迷宫#52-B", "type": "treasure", "desc": "冒险打开{t}"}, {"label": "诅咒迷宫#52-C", "type": "dodge", "desc": "可能有陷阱，绕开"}, {"label": "诅咒迷宫#52-D", "type": "safe", "desc": "用长棍试探"}]}, {"scene": "藤蔓缠绕突然启动！", "choices": [{"label": "诅咒迷宫#53-A", "type": "dodge", "desc": "紧急闪避"}, {"label": "诅咒迷宫#53-B", "type": "safe", "desc": "趴下"}, {"label": "诅咒迷宫#53-C", "type": "battle", "desc": "破坏机关源头"}, {"label": "诅咒迷宫#53-D", "type": "gold", "desc": "丢金币触发机关提前释放"}]}, {"scene": "一个声音从龙血池中传来：\"做出选择\"", "choices": [{"label": "诅咒迷宫#54-A", "type": "bless", "desc": "选择力量"}, {"label": "诅咒迷宫#54-B", "type": "heal", "desc": "选择生命力"}, {"label": "诅咒迷宫#54-C", "type": "card", "desc": "翻转命运卡牌"}, {"label": "诅咒迷宫#54-D", "type": "nothing", "desc": "拒绝选择"}]}, {"scene": "你遇到了一位流浪商人", "choices": [{"label": "诅咒迷宫#55-A", "type": "gold", "desc": "购买生命药水(5金币)"}, {"label": "诅咒迷宫#55-B", "type": "gold", "desc": "购买力量卷轴(8金币)"}, {"label": "诅咒迷宫#55-C", "type": "gold", "desc": "购买护甲碎片(6金币)"}, {"label": "诅咒迷宫#55-D", "type": "nothing", "desc": "不需要，谢谢"}]}, {"scene": "一只受伤的毒液飞龙蜷缩在角落，警惕地盯着你", "choices": [{"label": "诅咒迷宫#56-A", "type": "battle", "desc": "补刀结束它的痛苦"}, {"label": "诅咒迷宫#56-B", "type": "heal", "desc": "给它包扎伤口"}, {"label": "诅咒迷宫#56-C", "type": "intimidate", "desc": "吓跑它占它的地盘"}, {"label": "诅咒迷宫#56-D", "type": "dodge", "desc": "不打扰它"}]}, {"scene": "生锈的盔甲被藤蔓紧紧缠绕", "choices": [{"label": "诅咒迷宫#57-A", "type": "battle", "desc": "砍断藤蔓——但它们有生命！"}, {"label": "诅咒迷宫#57-B", "type": "gold", "desc": "用金币贿赂藤蔓"}, {"label": "诅咒迷宫#57-C", "type": "treasure", "desc": "小心割开不伤藤蔓"}, {"label": "诅咒迷宫#57-D", "type": "nothing", "desc": "太麻烦了放弃"}]}, {"scene": "你踩到了压力板，吸魂光环！", "choices": [{"label": "诅咒迷宫#58-A", "type": "dodge", "desc": "翻滚闪避"}, {"label": "诅咒迷宫#58-B", "type": "safe", "desc": "原地不动可能更安全"}, {"label": "诅咒迷宫#58-C", "type": "battle", "desc": "硬扛冲过去"}, {"label": "诅咒迷宫#58-D", "type": "nothing", "desc": "后退另寻路线"}]}, {"scene": "一只岩石魔像挡在你面前，眼神凶狠", "choices": [{"label": "终焉领域#1-A", "type": "battle", "desc": "与岩石魔像正面战斗"}, {"label": "终焉领域#1-B", "type": "intimidate", "desc": "大声呵斥试图吓退岩石魔像"}, {"label": "终焉领域#1-C", "type": "dodge", "desc": "利用地形绕过去"}, {"label": "终焉领域#1-D", "type": "gold", "desc": "丢出5金币引开它"}]}, {"scene": "你发现了一个倒吊的布袋，看起来有些年头了", "choices": [{"label": "终焉领域#2-A", "type": "treasure", "desc": "小心打开它"}, {"label": "终焉领域#2-B", "type": "gold", "desc": "粗暴砸开，可能损坏内容物"}, {"label": "终焉领域#2-C", "type": "dodge", "desc": "先检查有没有陷阱再开"}, {"label": "终焉领域#2-D", "type": "nothing", "desc": "太可疑了，无视它"}]}, {"scene": "吸魂光环突然启动！", "choices": [{"label": "终焉领域#3-A", "type": "dodge", "desc": "紧急闪避"}, {"label": "终焉领域#3-B", "type": "safe", "desc": "趴下"}, {"label": "终焉领域#3-C", "type": "battle", "desc": "破坏机关源头"}, {"label": "终焉领域#3-D", "type": "gold", "desc": "丢金币触发机关提前释放"}]}, {"scene": "地面刻着龙血池的符文", "choices": [{"label": "终焉领域#4-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "终焉领域#4-B", "type": "bless", "desc": "念诵符文"}, {"label": "终焉领域#4-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "终焉领域#4-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "墙壁上有一扇暗门，里面传出翻书的声音", "choices": [{"label": "终焉领域#5-A", "type": "battle", "desc": "冲进去——是个书灵！"}, {"label": "终焉领域#5-B", "type": "treasure", "desc": "悄悄查看有什么"}, {"label": "终焉领域#5-C", "type": "bless", "desc": "可能是个知识殿堂"}, {"label": "终焉领域#5-D", "type": "nothing", "desc": "不打扰读书的人"}]}, {"scene": "一只受伤的食人花蜷缩在角落，警惕地盯着你", "choices": [{"label": "终焉领域#6-A", "type": "battle", "desc": "补刀结束它的痛苦"}, {"label": "终焉领域#6-B", "type": "heal", "desc": "给它包扎伤口"}, {"label": "终焉领域#6-C", "type": "intimidate", "desc": "吓跑它占它的地盘"}, {"label": "终焉领域#6-D", "type": "dodge", "desc": "不打扰它"}]}, {"scene": "藤蔓缠绕的箱子散发着微弱的光芒", "choices": [{"label": "终焉领域#7-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "终焉领域#7-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "终焉领域#7-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "终焉领域#7-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "你感觉地板在震颤——藤蔓缠绕", "choices": [{"label": "终焉领域#8-A", "type": "safe", "desc": "退回安全区域"}, {"label": "终焉领域#8-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "终焉领域#8-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "终焉领域#8-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "一座凤凰羽毛出现在你面前", "choices": [{"label": "终焉领域#9-A", "type": "bless", "desc": "虔诚祈求祝福"}, {"label": "终焉领域#9-B", "type": "altar", "desc": "献祭3金币换取力量"}, {"label": "终焉领域#9-C", "type": "gold", "desc": "拿走祭品金币"}, {"label": "终焉领域#9-D", "type": "nothing", "desc": "不打扰神圣之物"}]}, {"scene": "天花板滴落着发光的水滴", "choices": [{"label": "终焉领域#10-A", "type": "heal", "desc": "接来喝掉"}, {"label": "终焉领域#10-B", "type": "treasure", "desc": "收集起来卖钱"}, {"label": "终焉领域#10-C", "type": "safe", "desc": "先检测是否有毒"}, {"label": "终焉领域#10-D", "type": "nothing", "desc": "不管它"}]}, {"scene": "一只受伤的暗影主教蜷缩在角落，警惕地盯着你", "choices": [{"label": "终焉领域#11-A", "type": "battle", "desc": "补刀结束它的痛苦"}, {"label": "终焉领域#11-B", "type": "heal", "desc": "给它包扎伤口"}, {"label": "终焉领域#11-C", "type": "intimidate", "desc": "吓跑它占它的地盘"}, {"label": "终焉领域#11-D", "type": "dodge", "desc": "不打扰它"}]}, {"scene": "墙壁裂缝中透出金光，火焰中漂浮的金属匣卡在里面", "choices": [{"label": "终焉领域#12-A", "type": "treasure", "desc": "撬开获取"}, {"label": "终焉领域#12-B", "type": "intimidate", "desc": "大喊看会不会掉出来"}, {"label": "终焉领域#12-C", "type": "gold", "desc": "伸手进去摸"}, {"label": "终焉领域#12-D", "type": "nothing", "desc": "太窄了放弃"}]}, {"scene": "古老的警报响起——天花板砸下巨石激活了", "choices": [{"label": "终焉领域#13-A", "type": "dodge", "desc": "敏捷通过"}, {"label": "终焉领域#13-B", "type": "safe", "desc": "找出并拆除机关"}, {"label": "终焉领域#13-C", "type": "intimidate", "desc": "用咒语压制魔法"}, {"label": "终焉领域#13-D", "type": "nothing", "desc": "原路返回"}]}, {"scene": "一座寂静钟铃出现在你面前", "choices": [{"label": "终焉领域#14-A", "type": "bless", "desc": "虔诚祈求祝福"}, {"label": "终焉领域#14-B", "type": "altar", "desc": "献祭3金币换取力量"}, {"label": "终焉领域#14-C", "type": "gold", "desc": "拿走祭品金币"}, {"label": "终焉领域#14-D", "type": "nothing", "desc": "不打扰神圣之物"}]}, {"scene": "一个被铁链锁住的宝箱在抖动", "choices": [{"label": "终焉领域#15-A", "type": "battle", "desc": "打开宝箱——里面封印着怪物！"}, {"label": "终焉领域#15-B", "type": "treasure", "desc": "小心撬锁"}, {"label": "终焉领域#15-C", "type": "gold", "desc": "晃动宝箱倒出金币"}, {"label": "终焉领域#15-D", "type": "nothing", "desc": "太可疑了不理它"}]}, {"scene": "虚空之种正在守护一个发光的物体", "choices": [{"label": "终焉领域#16-A", "type": "battle", "desc": "打败{m}夺取宝物"}, {"label": "终焉领域#16-B", "type": "dodge", "desc": "吸引{m}注意力后绕开"}, {"label": "终焉领域#16-C", "type": "gold", "desc": "用金币交换"}, {"label": "终焉领域#16-D", "type": "intimidate", "desc": "虚张声势吓跑它"}]}, {"scene": "水潭底部被藤蔓紧紧缠绕", "choices": [{"label": "终焉领域#17-A", "type": "battle", "desc": "砍断藤蔓——但它们有生命！"}, {"label": "终焉领域#17-B", "type": "gold", "desc": "用金币贿赂藤蔓"}, {"label": "终焉领域#17-C", "type": "treasure", "desc": "小心割开不伤藤蔓"}, {"label": "终焉领域#17-D", "type": "nothing", "desc": "太麻烦了放弃"}]}, {"scene": "前方通道弥漫着可疑的雾气——致幻孢子", "choices": [{"label": "终焉领域#18-A", "type": "dodge", "desc": "屏住呼吸冲过去"}, {"label": "终焉领域#18-B", "type": "safe", "desc": "用布掩住口鼻慢行"}, {"label": "终焉领域#18-C", "type": "gold", "desc": "消耗3金币购买解毒草"}, {"label": "终焉领域#18-D", "type": "nothing", "desc": "等雾气散去"}]}, {"scene": "地面刻着女神雕像的符文", "choices": [{"label": "终焉领域#19-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "终焉领域#19-B", "type": "bless", "desc": "念诵符文"}, {"label": "终焉领域#19-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "终焉领域#19-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "你听到了奇怪的歌声从远处飘来...", "choices": [{"label": "终焉领域#20-A", "type": "battle", "desc": "循声而去——是塞壬！"}, {"label": "终焉领域#20-B", "type": "dodge", "desc": "捂住耳朵绕开"}, {"label": "终焉领域#20-C", "type": "bless", "desc": "歌声似乎有治愈之力"}, {"label": "终焉领域#20-D", "type": "nothing", "desc": "无视它继续前进"}]}, {"scene": "镜中魅影正在守护一个发光的物体", "choices": [{"label": "终焉领域#21-A", "type": "battle", "desc": "打败{m}夺取宝物"}, {"label": "终焉领域#21-B", "type": "dodge", "desc": "吸引{m}注意力后绕开"}, {"label": "终焉领域#21-C", "type": "gold", "desc": "用金币交换"}, {"label": "终焉领域#21-D", "type": "intimidate", "desc": "虚张声势吓跑它"}]}, {"scene": "你发现了一个水潭底部，看起来有些年头了", "choices": [{"label": "终焉领域#22-A", "type": "treasure", "desc": "小心打开它"}, {"label": "终焉领域#22-B", "type": "gold", "desc": "粗暴砸开，可能损坏内容物"}, {"label": "终焉领域#22-C", "type": "dodge", "desc": "先检查有没有陷阱再开"}, {"label": "终焉领域#22-D", "type": "nothing", "desc": "太可疑了，无视它"}]}, {"scene": "你感觉地板在震颤——时间倒流诅咒", "choices": [{"label": "终焉领域#23-A", "type": "safe", "desc": "退回安全区域"}, {"label": "终焉领域#23-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "终焉领域#23-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "终焉领域#23-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "一个声音从寂静钟铃中传来：\"做出选择\"", "choices": [{"label": "终焉领域#24-A", "type": "bless", "desc": "选择力量"}, {"label": "终焉领域#24-B", "type": "heal", "desc": "选择生命力"}, {"label": "终焉领域#24-C", "type": "card", "desc": "翻转命运卡牌"}, {"label": "终焉领域#24-D", "type": "nothing", "desc": "拒绝选择"}]}, {"scene": "你遇到了一位流浪商人", "choices": [{"label": "终焉领域#25-A", "type": "gold", "desc": "购买生命药水(5金币)"}, {"label": "终焉领域#25-B", "type": "gold", "desc": "购买力量卷轴(8金币)"}, {"label": "终焉领域#25-C", "type": "gold", "desc": "购买护甲碎片(6金币)"}, {"label": "终焉领域#25-D", "type": "nothing", "desc": "不需要，谢谢"}]}, {"scene": "食人花正在守护一个发光的物体", "choices": [{"label": "终焉领域#26-A", "type": "battle", "desc": "打败{m}夺取宝物"}, {"label": "终焉领域#26-B", "type": "dodge", "desc": "吸引{m}注意力后绕开"}, {"label": "终焉领域#26-C", "type": "gold", "desc": "用金币交换"}, {"label": "终焉领域#26-D", "type": "intimidate", "desc": "虚张声势吓跑它"}]}, {"scene": "你发现了一个虚空裂隙里的发光物体，看起来有些年头了", "choices": [{"label": "终焉领域#27-A", "type": "treasure", "desc": "小心打开它"}, {"label": "终焉领域#27-B", "type": "gold", "desc": "粗暴砸开，可能损坏内容物"}, {"label": "终焉领域#27-C", "type": "dodge", "desc": "先检查有没有陷阱再开"}, {"label": "终焉领域#27-D", "type": "nothing", "desc": "太可疑了，无视它"}]}, {"scene": "你踩到了压力板，幻象迷宫！", "choices": [{"label": "终焉领域#28-A", "type": "dodge", "desc": "翻滚闪避"}, {"label": "终焉领域#28-B", "type": "safe", "desc": "原地不动可能更安全"}, {"label": "终焉领域#28-C", "type": "battle", "desc": "硬扛冲过去"}, {"label": "终焉领域#28-D", "type": "nothing", "desc": "后退另寻路线"}]}, {"scene": "地面刻着凤凰羽毛的符文", "choices": [{"label": "终焉领域#29-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "终焉领域#29-B", "type": "bless", "desc": "念诵符文"}, {"label": "终焉领域#29-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "终焉领域#29-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "你发现了一具冒险者的遗骸", "choices": [{"label": "终焉领域#30-A", "type": "treasure", "desc": "搜刮遗物"}, {"label": "终焉领域#30-B", "type": "gold", "desc": "安葬他获得祝福"}, {"label": "终焉领域#30-C", "type": "safe", "desc": "阅读他的日志"}, {"label": "终焉领域#30-D", "type": "nothing", "desc": "默哀后离开"}]}, {"scene": "终焉领域的黑暗中，时空裂虫从天花板垂下", "choices": [{"label": "终焉领域#31-A", "type": "battle", "desc": "挥剑迎击"}, {"label": "终焉领域#31-B", "type": "dodge", "desc": "翻滚闪避"}, {"label": "终焉领域#31-C", "type": "gold", "desc": "扔出闪光粉制造机会"}, {"label": "终焉领域#31-D", "type": "intimidate", "desc": "大喊咒语驱逐"}]}, {"scene": "藤蔓缠绕的箱子散发着微弱的光芒", "choices": [{"label": "终焉领域#32-A", "type": "treasure", "desc": "打开获取宝物"}, {"label": "终焉领域#32-B", "type": "bless", "desc": "虔诚祈祷可能获得祝福"}, {"label": "终焉领域#32-C", "type": "gold", "desc": "只拿金币就走"}, {"label": "终焉领域#32-D", "type": "nothing", "desc": "害怕诅咒，不碰"}]}, {"scene": "你感觉地板在震颤——魔法符文爆炸", "choices": [{"label": "终焉领域#33-A", "type": "safe", "desc": "退回安全区域"}, {"label": "终焉领域#33-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "终焉领域#33-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "终焉领域#33-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "一座生命树苗出现在你面前", "choices": [{"label": "终焉领域#34-A", "type": "bless", "desc": "虔诚祈求祝福"}, {"label": "终焉领域#34-B", "type": "altar", "desc": "献祭3金币换取力量"}, {"label": "终焉领域#34-C", "type": "gold", "desc": "拿走祭品金币"}, {"label": "终焉领域#34-D", "type": "nothing", "desc": "不打扰神圣之物"}]}, {"scene": "你遇到了一位流浪商人", "choices": [{"label": "终焉领域#35-A", "type": "gold", "desc": "购买生命药水(5金币)"}, {"label": "终焉领域#35-B", "type": "gold", "desc": "购买力量卷轴(8金币)"}, {"label": "终焉领域#35-C", "type": "gold", "desc": "购买护甲碎片(6金币)"}, {"label": "终焉领域#35-D", "type": "nothing", "desc": "不需要，谢谢"}]}, {"scene": "两只虚空之种在分食猎物，还没注意到你", "choices": [{"label": "终焉领域#36-A", "type": "battle", "desc": "偷袭！先发制人"}, {"label": "终焉领域#36-B", "type": "dodge", "desc": "悄悄从旁边溜过去"}, {"label": "终焉领域#36-C", "type": "gold", "desc": "丢出3金币制造声响引开"}, {"label": "终焉领域#36-D", "type": "intimidate", "desc": "发出战吼震慑它们"}]}, {"scene": "火焰中漂浮的金属匣被藤蔓紧紧缠绕", "choices": [{"label": "终焉领域#37-A", "type": "battle", "desc": "砍断藤蔓——但它们有生命！"}, {"label": "终焉领域#37-B", "type": "gold", "desc": "用金币贿赂藤蔓"}, {"label": "终焉领域#37-C", "type": "treasure", "desc": "小心割开不伤藤蔓"}, {"label": "终焉领域#37-D", "type": "nothing", "desc": "太麻烦了放弃"}]}, {"scene": "你感觉地板在震颤——暗影分身袭击", "choices": [{"label": "终焉领域#38-A", "type": "safe", "desc": "退回安全区域"}, {"label": "终焉领域#38-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "终焉领域#38-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "终焉领域#38-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "一个声音从生命树苗中传来：\"做出选择\"", "choices": [{"label": "终焉领域#39-A", "type": "bless", "desc": "选择力量"}, {"label": "终焉领域#39-B", "type": "heal", "desc": "选择生命力"}, {"label": "终焉领域#39-C", "type": "card", "desc": "翻转命运卡牌"}, {"label": "终焉领域#39-D", "type": "nothing", "desc": "拒绝选择"}]}, {"scene": "天花板滴落着发光的水滴", "choices": [{"label": "终焉领域#40-A", "type": "heal", "desc": "接来喝掉"}, {"label": "终焉领域#40-B", "type": "treasure", "desc": "收集起来卖钱"}, {"label": "终焉领域#40-C", "type": "safe", "desc": "先检测是否有毒"}, {"label": "终焉领域#40-D", "type": "nothing", "desc": "不管它"}]}, {"scene": "时空裂虫正在守护一个发光的物体", "choices": [{"label": "终焉领域#41-A", "type": "battle", "desc": "打败{m}夺取宝物"}, {"label": "终焉领域#41-B", "type": "dodge", "desc": "吸引{m}注意力后绕开"}, {"label": "终焉领域#41-C", "type": "gold", "desc": "用金币交换"}, {"label": "终焉领域#41-D", "type": "intimidate", "desc": "虚张声势吓跑它"}]}, {"scene": "你发现了一个水潭底部，看起来有些年头了", "choices": [{"label": "终焉领域#42-A", "type": "treasure", "desc": "小心打开它"}, {"label": "终焉领域#42-B", "type": "gold", "desc": "粗暴砸开，可能损坏内容物"}, {"label": "终焉领域#42-C", "type": "dodge", "desc": "先检查有没有陷阱再开"}, {"label": "终焉领域#42-D", "type": "nothing", "desc": "太可疑了，无视它"}]}, {"scene": "你感觉地板在震颤——藤蔓缠绕", "choices": [{"label": "终焉领域#43-A", "type": "safe", "desc": "退回安全区域"}, {"label": "终焉领域#43-B", "type": "dodge", "desc": "跑到下一个掩体"}, {"label": "终焉领域#43-C", "type": "battle", "desc": "用武器摧毁机关"}, {"label": "终焉领域#43-D", "type": "nothing", "desc": "闭眼赌一把"}]}, {"scene": "一座寂静钟铃出现在你面前", "choices": [{"label": "终焉领域#44-A", "type": "bless", "desc": "虔诚祈求祝福"}, {"label": "终焉领域#44-B", "type": "altar", "desc": "献祭3金币换取力量"}, {"label": "终焉领域#44-C", "type": "gold", "desc": "拿走祭品金币"}, {"label": "终焉领域#44-D", "type": "nothing", "desc": "不打扰神圣之物"}]}, {"scene": "墙壁上有一扇暗门，里面传出翻书的声音", "choices": [{"label": "终焉领域#45-A", "type": "battle", "desc": "冲进去——是个书灵！"}, {"label": "终焉领域#45-B", "type": "treasure", "desc": "悄悄查看有什么"}, {"label": "终焉领域#45-C", "type": "bless", "desc": "可能是个知识殿堂"}, {"label": "终焉领域#45-D", "type": "nothing", "desc": "不打扰读书的人"}]}, {"scene": "黄金史莱姆正在守护一个发光的物体", "choices": [{"label": "终焉领域#46-A", "type": "battle", "desc": "打败{m}夺取宝物"}, {"label": "终焉领域#46-B", "type": "dodge", "desc": "吸引{m}注意力后绕开"}, {"label": "终焉领域#46-C", "type": "gold", "desc": "用金币交换"}, {"label": "终焉领域#46-D", "type": "intimidate", "desc": "虚张声势吓跑它"}]}, {"scene": "地上散落着金币，旁边有一个上锁的铁箱", "choices": [{"label": "终焉领域#47-A", "type": "gold", "desc": "捡金币走人"}, {"label": "终焉领域#47-B", "type": "treasure", "desc": "冒险打开{t}"}, {"label": "终焉领域#47-C", "type": "dodge", "desc": "可能有陷阱，绕开"}, {"label": "终焉领域#47-D", "type": "safe", "desc": "用长棍试探"}]}, {"scene": "你踩到了压力板，幻象迷宫！", "choices": [{"label": "终焉领域#48-A", "type": "dodge", "desc": "翻滚闪避"}, {"label": "终焉领域#48-B", "type": "safe", "desc": "原地不动可能更安全"}, {"label": "终焉领域#48-C", "type": "battle", "desc": "硬扛冲过去"}, {"label": "终焉领域#48-D", "type": "nothing", "desc": "后退另寻路线"}]}, {"scene": "地面刻着因果之镜的符文", "choices": [{"label": "终焉领域#49-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "终焉领域#49-B", "type": "bless", "desc": "念诵符文"}, {"label": "终焉领域#49-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "终焉领域#49-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "塔内的温度突然骤降，空气中凝结出冰晶", "choices": [{"label": "终焉领域#50-A", "type": "battle", "desc": "冰元素正在成型——消灭它！"}, {"label": "终焉领域#50-B", "type": "safe", "desc": "生火取暖"}, {"label": "终焉领域#50-C", "type": "dodge", "desc": "快速跑过这片区域"}, {"label": "终焉领域#50-D", "type": "heal", "desc": "吃下暖身草药"}]}, {"scene": "一只受伤的雷暴之核蜷缩在角落，警惕地盯着你", "choices": [{"label": "终焉领域#51-A", "type": "battle", "desc": "补刀结束它的痛苦"}, {"label": "终焉领域#51-B", "type": "heal", "desc": "给它包扎伤口"}, {"label": "终焉领域#51-C", "type": "intimidate", "desc": "吓跑它占它的地盘"}, {"label": "终焉领域#51-D", "type": "dodge", "desc": "不打扰它"}]}, {"scene": "地上散落着金币，旁边有一个蛛网后的暗门", "choices": [{"label": "终焉领域#52-A", "type": "gold", "desc": "捡金币走人"}, {"label": "终焉领域#52-B", "type": "treasure", "desc": "冒险打开{t}"}, {"label": "终焉领域#52-C", "type": "dodge", "desc": "可能有陷阱，绕开"}, {"label": "终焉领域#52-D", "type": "safe", "desc": "用长棍试探"}]}, {"scene": "时间倒流诅咒突然启动！", "choices": [{"label": "终焉领域#53-A", "type": "dodge", "desc": "紧急闪避"}, {"label": "终焉领域#53-B", "type": "safe", "desc": "趴下"}, {"label": "终焉领域#53-C", "type": "battle", "desc": "破坏机关源头"}, {"label": "终焉领域#53-D", "type": "gold", "desc": "丢金币触发机关提前释放"}]}, {"scene": "地面刻着星辉水晶的符文", "choices": [{"label": "终焉领域#54-A", "type": "altar", "desc": "站在符文上献祭"}, {"label": "终焉领域#54-B", "type": "bless", "desc": "念诵符文"}, {"label": "终焉领域#54-C", "type": "gold", "desc": "挖开地面找宝藏"}, {"label": "终焉领域#54-D", "type": "safe", "desc": "临摹符文留作纪念"}]}, {"scene": "天花板滴落着发光的水滴", "choices": [{"label": "终焉领域#55-A", "type": "heal", "desc": "接来喝掉"}, {"label": "终焉领域#55-B", "type": "treasure", "desc": "收集起来卖钱"}, {"label": "终焉领域#55-C", "type": "safe", "desc": "先检测是否有毒"}, {"label": "终焉领域#55-D", "type": "nothing", "desc": "不管它"}]}, {"scene": "镜面分身正在守护一个发光的物体", "choices": [{"label": "终焉领域#56-A", "type": "battle", "desc": "打败{m}夺取宝物"}, {"label": "终焉领域#56-B", "type": "dodge", "desc": "吸引{m}注意力后绕开"}, {"label": "终焉领域#56-C", "type": "gold", "desc": "用金币交换"}, {"label": "终焉领域#56-D", "type": "intimidate", "desc": "虚张声势吓跑它"}]}, {"scene": "地上散落着金币，旁边有一个冰封的宝箱", "choices": [{"label": "终焉领域#57-A", "type": "gold", "desc": "捡金币走人"}, {"label": "终焉领域#57-B", "type": "treasure", "desc": "冒险打开{t}"}, {"label": "终焉领域#57-C", "type": "dodge", "desc": "可能有陷阱，绕开"}, {"label": "终焉领域#57-D", "type": "safe", "desc": "用长棍试探"}]}, {"scene": "古老的警报响起——雷电劈落激活了", "choices": [{"label": "终焉领域#58-A", "type": "dodge", "desc": "敏捷通过"}, {"label": "终焉领域#58-B", "type": "safe", "desc": "找出并拆除机关"}, {"label": "终焉领域#58-C", "type": "intimidate", "desc": "用咒语压制魔法"}, {"label": "终焉领域#58-D", "type": "nothing", "desc": "原路返回"}]}];
+
+function getScene() {
+  var idx = (P.floor - 1) % SCENES.length;
+  var tierStart = P.floor < 20 ? 0 : P.floor < 40 ? 58 : P.floor < 60 ? 116 : P.floor < 90 ? 174 : 232;
+  var offset = idx % 58;
+  if (P.floor >= 100) return SCENES[tierStart + (idx % 58)];
+  return SCENES[tierStart + offset];
+}
+
 function fight(m) {
   var log = [], mhp = m.hp, round = 0;
   while (mhp > 0 && P.hp > 0) {
     round++;
-    var pAtk = P.atk;
-    // 闪避
-    if (m.fx === '闪避' && Math.random() < 0.3) {
-      log.push('第' + round + '回合：' + m.name + '闪避了攻击！');
-    } else {
-      mhp -= pAtk;
-      log.push('第' + round + '回合：你对' + m.name + '造成' + pAtk + '点伤害');
-    }
-    if (mhp <= 0) { P.gold += m.gold; log.push(m.name + '被击败！获得' + m.gold + '金币'); break; }
-    // 怪物攻击
+    mhp -= P.atk;
+    log.push('第'+round+'回合：你对'+m.name+'造成'+P.atk+'点伤害');
+    if (mhp <= 0) { P.gold += m.gold; log.push(m.name+'被击败！获得'+m.gold+'金币'); break; }
     P.hp -= m.atk;
-    log.push(m.name + '对你造成' + m.atk + '点伤害');
-    // 中毒
-    if (m.fx === '中毒' && round > 1) { P.hp -= 1; log.push('毒素造成1点伤害'); }
-    // 反伤
-    if (m.fx === '反伤' && round === 1) { P.hp -= Math.floor(m.atk * 0.5); log.push('反伤造成' + Math.floor(m.atk*0.5) + '点伤害'); }
-    // 吸血
-    if (m.fx === '吸血' && round > 1) { mhp += 1; log.push(m.name + '吸取了1点生命'); }
+    log.push(m.name+'对你造成'+m.atk+'点伤害');
     if (P.hp <= 0) { log.push('你倒下了...'); break; }
   }
   return log;
 }
 
-// ─── 事件场景库（290个场景，每场景4个应对选项） ───
-var SCENES = [];
-// 1-20层 基础场景
-for (var i = 0; i < 60; i++) {
-  SCENES.push([
-    {scene:'一只骷髅兵从黑暗中走出，骨骼咔咔作响', choices:[
-      {label:'A. 正面迎战', type:'battle', desc:'与骷髅兵战斗'},
-      {label:'B. 绕道而行', type:'dodge', desc:'尝试绕过它'},
-      {label:'C. 投掷金币引开', type:'gold', cost:5, desc:'花5金币引开'},
-      {label:'D. 大声呵斥', type:'intimidate', desc:'尝试吓退它'}
-    ]},
-    {scene:'你发现了一个破旧的宝箱，锁已经生锈了', choices:[
-      {label:'A. 用力砸开', type:'treasure', risk:'trap', desc:'可能触发陷阱'},
-      {label:'B. 小心撬锁', type:'treasure', desc:'安全打开'},
-      {label:'C. 直接搬走', type:'gold', desc:'获得少量金币'},
-      {label:'D. 无视它', type:'nothing', desc:'继续前进'}
-    ]},
-    {scene:'地上散落着几枚金币，但前方有根可疑的细线', choices:[
-      {label:'A. 快速捡起金币', type:'gold', risk:'trap', desc:'可能触发陷阱'},
-      {label:'B. 先切断细线', type:'safe', desc:'安全通过'},
-      {label:'C. 用棍子探路', type:'gold', desc:'安全获得部分金币'},
-      {label:'D. 绕路', type:'nothing', desc:'避开风险'}
-    ]},
-    {scene:'一只幽灵漂浮在半空，发出低沉的呜咽', choices:[
-      {label:'A. 战斗', type:'battle', desc:'与幽灵战斗'},
-      {label:'B. 倾听它的故事', type:'bless', desc:'可能获得祝福'},
-      {label:'C. 念诵驱魔咒', type:'intimidate', desc:'尝试驱散'},
-      {label:'D. 安静绕过', type:'dodge', desc:'悄悄通过'}
-    ]},
-    {scene:'你发现了一小瓶散发着微光的药水', choices:[
-      {label:'A. 立刻喝下', type:'heal', desc:'恢复生命'},
-      {label:'B. 仔细检查', type:'heal', desc:'确认安全后喝下'},
-      {label:'C. 装进背包', type:'treasure', desc:'留着以后用'},
-      {label:'D. 倒掉', type:'nothing', desc:'可能有毒'}
-    ]},
-    {scene:'一座古老的祭坛散发着微光，上面刻着符文', choices:[
-      {label:'A. 献祭3金币', type:'altar', cost:3, desc:'祈求力量'},
-      {label:'B. 献祭1点生命', type:'altar', costHp:1, desc:'祈求智慧'},
-      {label:'C. 触摸符文', type:'bless', desc:'随机效果'},
-      {label:'D. 离开', type:'nothing', desc:'不打扰祭坛'}
-    ]},
-    {scene:'一张命运卡牌悬浮在空中，缓缓旋转', choices:[
-      {label:'A. 翻开正面', type:'card', desc:'接受命运'},
-      {label:'B. 翻开反面', type:'card', desc:'颠覆命运'},
-      {label:'C. 烧掉卡牌', type:'nothing', desc:'拒绝命运'},
-      {label:'D. 收起来', type:'treasure', desc:'保留卡牌'}
-    ]},
-    {scene:'你听到前方传来微弱的呼救声', choices:[
-      {label:'A. 冲过去查看', type:'battle', desc:'可能是陷阱'},
-      {label:'B. 悄悄靠近', type:'gold', desc:'救下被困者获得报酬'},
-      {label:'C. 大声回应', type:'intimidate', desc:'吓跑可能的敌人'},
-      {label:'D. 无视', type:'nothing', desc:'继续赶路'}
-    ]},
-    {scene:'墙壁上有一道裂缝，透出微弱的金光', choices:[
-      {label:'A. 用力砸开', type:'treasure', desc:'可能有好东西'},
-      {label:'B. 伸手进去摸', type:'gold', risk:'trap', desc:'冒险一试'},
-      {label:'C. 用武器撬', type:'treasure', desc:'安全扩大裂缝'},
-      {label:'D. 继续前进', type:'nothing', desc:'不浪费时间'}
-    ]},
-    {scene:'一只哥布林蹲在角落里数金币，没注意到你', choices:[
-      {label:'A. 偷袭', type:'battle', desc:'先发制人'},
-      {label:'B. 偷走金币', type:'gold', desc:'不惊动它'},
-      {label:'C. 谈判', type:'gold', desc:'分一杯羹'},
-      {label:'D. 悄悄绕过', type:'dodge', desc:'不惹麻烦'}
-    ]},
-  ]);
+function doAction(c) {
+  P.log = [];
+  var label = c.label.split('-')[1] || c.label;
+  P.log.push(label+'：'+c.desc);
+  switch(c.type) {
+    case 'battle': var m = getMon(); P.log = P.log.concat(fight(m)); break;
+    case 'dodge': if(Math.random()<0.7) P.log.push('成功绕了过去！'); else { var m=getMon(); P.log= P.log.concat(fight(m)); } break;
+    case 'gold': var g=rnd(5+P.floor,20+P.floor*2); P.gold+=g; P.log.push('获得'+g+'金币！'); break;
+    case 'treasure': var g=rnd(10+P.floor,30+P.floor*2); P.gold+=g; P.log.push('发现宝物！获得'+g+'金币！'); break;
+    case 'heal': var h=rnd(2,5+Math.floor(P.floor/10)); P.hp=Math.min(P.maxHp,P.hp+h); P.log.push('恢复了'+h+'点生命！'); break;
+    case 'bless': if(Math.random()>0.5){P.atk+=1;P.log.push('获得祝福！攻击+1');}else{P.hp+=2;P.log.push('获得祝福！生命+2');} break;
+    case 'intimidate': if(Math.random()<0.6) P.log.push('成功吓退了敌人！'); else { var m=getMon(); P.log=P.log.concat(fight(m)); } break;
+    case 'altar': P.gold-=3; if(P.gold<0)P.gold=0; P.atk+=1; P.log.push('祭坛赐予力量...攻击+1！'); break;
+    case 'card': if(Math.random()>0.5){P.atk+=2;P.log.push('命运正位：攻击+2！');}else{P.hp-=1;P.log.push('命运逆位：生命-1');} break;
+    case 'safe': P.log.push('安全通过...'); break;
+    case 'nothing': P.log.push('继续前进...'); break;
+  }
+  checkSpecial();
+  if(P.showingMaze||P.showingRiddle||P.showingFakeEnd){render();return;}
+  P.floor++;
+  if(P.hp<=0)P.deaths++;
+  render();
 }
 
-// 后面还有更多场景，但先确保核心可用
-// 补充场景直到覆盖所有楼层
-while (SCENES.length < 150) {
-  var pool = SCENES.slice(0, 60);
-  SCENES.push(pick(pool));
+function checkSpecial() {
+  if(P.floor===25||P.floor===50||P.floor===75) {
+    var bosses={25:[{name:'石像鬼领主',hp:12,atk:5,gold:50}],50:[{name:'炎魔',hp:22,atk:8,gold:80}],75:[{name:'虚空之龙',hp:35,atk:12,gold:120}]};
+    var b=pick(bosses[P.floor]);
+    P.log=['第'+P.floor+'层——BOSS战！'+b.name+'出现了！'];
+    P.log=P.log.concat(fight(b));
+    if(P.hp>0){P.gold+=b.gold;P.log.push(b.name+'被击败！获得'+b.gold+'金币');}
+  }
+  if(P.floor===98){P.log=['魔龙·焚世者！'];P.log=P.log.concat(fight({name:'魔龙·焚世者',hp:45,atk:15,gold:200}));if(P.hp>0)P.gold+=200;}
+  if(P.floor===101){P.log=['虚空之主！'];P.log=P.log.concat(fight({name:'真·魔王·虚空之主',hp:70,atk:20,gold:500}));if(P.hp>0)P.gold+=500;}
 }
 
-// ─── 获取场景 ───
-function getScene() {
-  // 从SCENES中随机选一个，但避免连续重复
-  var idx = Math.floor(Math.random() * SCENES.length);
-  return SCENES[idx];
-}
-
-// ─── 渲染 ───
 function render() {
-  var h = $('hp'), a = $('atk'), g = $('gold'), f = $('floor-display'), fn = $('floor-name'), nar = $('narrative'), ch = $('choices');
-  if (!h || !a || !g || !f || !fn || !nar || !ch) return;
-  h.textContent = P.hp + '/' + P.maxHp;
-  a.textContent = P.atk;
-  g.textContent = P.gold;
-  
-  if (P.towerOutside) { f.textContent = '塔外 · ???'; fn.textContent = ''; }
-  else { f.textContent = '第 ' + P.floor + ' 层'; fn.textContent = ''; }
-  
-  // 显示日志
-  var txt = P.log.length > 0 ? P.log.join('\n') : '第' + P.floor + '层...';
-  nar.textContent = txt;
-  
-  // 死亡
-  if (P.hp <= 0) {
-    nar.textContent = '你倒在了第' + P.floor + '层...\n死亡次数：' + (P.deaths + 1);
-    ch.innerHTML = '<button class="choice-btn" onclick="startGame()"><span class="choice-label">R</span>重新挑战</button>';
-    return;
-  }
-  
-  // 胜利
-  if (P.floor > 101) {
-    nar.textContent = '你击败了虚空之主！塔崩毁了...你成为了新的传说。';
-    ch.innerHTML = '<button class="choice-btn" onclick="startGame()"><span class="choice-label">R</span>再玩一次</button>';
-    return;
-  }
-  
-  // 特殊界面
-  if (P.showingShop) {
-    var htm = '<div style="margin-bottom:8px;color:#f0c060;">流浪商人的商品：</div>';
-    for (var i = 0; i < P.shopItems.length; i++) {
-      var item = P.shopItems[i];
-      htm += '<button class="choice-btn" onclick="buyShop(' + i + ')"><span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + item.name + ' - ' + item.desc + '（' + item.cost + '金币）</button>';
-    }
-    htm += '<button class="choice-btn" onclick="P.showingShop=false;P.floor++;render();"><span class="choice-label">X</span>离开商店</button>';
-    ch.innerHTML = htm;
-    return;
-  }
-  if (P.showingMaze) {
-    htm = '';
-    for (var i = 0; i < P.mazeChoices.length; i++) {
-      htm += '<button class="choice-btn" onclick="doMaze(' + i + ')"><span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + P.mazeChoices[i].text + '</button>';
-    }
-    ch.innerHTML = htm;
-    return;
-  }
-  if (P.showingRiddle) {
-    ch.innerHTML = '<input id="riddle-in" type="text" placeholder="输入你的答案..." style="width:100%;padding:12px;background:#1a1a2e;border:1px solid #3a3a4a;border-radius:8px;color:#c8b888;font-size:14px;margin-bottom:8px;"><button class="choice-btn" onclick="doRiddle()"><span class="choice-label">OK</span>提交答案</button>';
-    return;
-  }
-  if (P.showingFakeEnd) {
-    htm = '';
-    for (var i = 0; i < P.fakeEndChoices.length; i++) {
-      htm += '<button class="choice-btn" onclick="doFakeEnd(' + i + ')"><span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + P.fakeEndChoices[i].label + '</button>';
-    }
-    ch.innerHTML = htm;
-    return;
-  }
-  
-  // 正常楼层——获取场景并渲染
-  var scene = getScene();
-  P.eventsStore = scene;
-  nar.textContent = '第' + P.floor + '层：' + scene[0].scene;
-  ch.innerHTML = '';
-  var choices = scene[0].choices;
-  for (var i = 0; i < choices.length; i++) {
-    var btn = document.createElement('button');
-    btn.className = 'choice-btn';
-    btn.innerHTML = '<span class="choice-label">' + String.fromCharCode(65+i) + '</span>' + choices[i].label.split('. ')[1] + ' - ' + choices[i].desc;
-    btn.onclick = (function(idx) { return function() { doAction(P.eventsStore[0].choices[idx]); }; })(i);
+  var h=$('hp'),a=$('atk'),g=$('gold'),f=$('floor-display'),nar=$('narrative'),ch=$('choices');
+  if(!h||!a||!g||!f||!nar||!ch)return;
+  h.textContent=P.hp+'/'+P.maxHp;a.textContent=P.atk;g.textContent=P.gold;
+  f.textContent='第 '+P.floor+' 层';
+  if(P.hp<=0){nar.textContent='你倒在了第'+P.floor+'层...\n死亡次数：'+(P.deaths+1);ch.innerHTML='<button class="choice-btn" onclick="startGame()"><span class="choice-label">R</span>重新挑战</button>';return;}
+  if(P.floor>101){nar.textContent='你击败了虚空之主！塔崩毁了...你成为了新的传说。';ch.innerHTML='<button class="choice-btn" onclick="startGame()"><span class="choice-label">R</span>再玩一次</button>';return;}
+  var scene=getScene();
+  P.eventsStore=scene;
+  nar.textContent='第'+P.floor+'层：'+scene.scene;
+  ch.innerHTML='';
+  for(var i=0;i<scene.choices.length;i++) {
+    var btn=document.createElement('button');
+    btn.className='choice-btn';
+    btn.innerHTML='<span class="choice-label">'+String.fromCharCode(65+i)+'</span>'+scene.choices[i].desc;
+    btn.onclick=(function(idx){return function(){doAction(P.eventsStore.choices[idx]);};})(i);
     ch.appendChild(btn);
   }
 }
 
-// ─── 处理玩家选择 ───
-function doAction(c) {
-  P.log = [];
-  switch(c.type) {
-    case 'battle':
-      var m = getMon();
-      P.log = [c.label.split('. ')[1] + '！'];
-      P.log = P.log.concat(fight(m));
-      break;
-    case 'dodge':
-      if (Math.random() < 0.7) { P.log = ['你成功绕了过去！']; }
-      else { P.log = ['被发现了！']; var m = getMon(); P.log = P.log.concat(fight(m)); }
-      break;
-    case 'gold':
-      var g = c.cost ? -c.cost : rnd(5 + P.floor, 20 + P.floor*2);
-      if (c.cost) { P.gold -= c.cost; }
-      else { P.gold += g; }
-      P.log = [c.cost ? '你花了' + c.cost + '金币...' : '获得了' + g + '金币！'];
-      if (c.risk === 'trap' && Math.random() < 0.3) {
-        var d = rnd(2, 4);
-        P.hp -= d;
-        P.log.push('但触发了陷阱！受到' + d + '点伤害');
-      }
-      break;
-    case 'treasure':
-      var g = rnd(10 + P.floor, 30 + P.floor*2);
-      P.gold += g;
-      P.log = ['打开宝箱，获得了' + g + '金币！'];
-      if (c.risk === 'trap' && Math.random() < 0.3) {
-        var d = rnd(2, 5);
-        P.hp -= d;
-        P.log.push('但宝箱有陷阱！受到' + d + '点伤害');
-      }
-      break;
-    case 'heal':
-      var h = rnd(2, 5 + Math.floor(P.floor/10));
-      P.hp = Math.min(P.maxHp, P.hp + h);
-      P.log = ['恢复了' + h + '点生命！'];
-      break;
-    case 'bless':
-      if (Math.random() > 0.5) { P.atk += 1; P.log = ['获得了祝福！攻击+1']; }
-      else { P.hp += 2; P.log = ['获得了祝福！生命+2']; }
-      break;
-    case 'intimidate':
-      if (Math.random() < 0.6) { P.log = ['成功吓退了敌人！']; }
-      else { P.log = ['对方不为所动...']; var m = getMon(); P.log = P.log.concat(fight(m)); }
-      break;
-    case 'altar':
-      if (c.cost) P.gold -= c.cost;
-      if (c.costHp) P.hp -= c.costHp;
-      P.atk += 1;
-      P.log = ['祭坛的力量涌入身体...攻击+1！'];
-      break;
-    case 'card':
-      var roll = Math.random();
-      if (roll > 0.5) { P.atk += 2; P.log = ['命运卡牌正位：攻击+2！']; }
-      else { P.hp -= 1; P.log = ['命运卡牌逆位：生命-1']; }
-      break;
-    case 'safe':
-      P.log = ['你安全通过了这里...'];
-      break;
-    case 'nothing':
-      P.log = ['你决定继续前进...'];
-      break;
-    default:
-      P.log = ['一个未知的事件...'];
-  }
-  
-  // 检查特殊楼层
-  checkSpecial();
-  if (P.showingMaze || P.showingRiddle || P.showingFakeEnd) { render(); return; }
-  
-  P.floor++;
-  if (P.hp <= 0) { P.deaths++; }
-  render();
-}
-
-// ─── 特殊楼层 ───
-function checkSpecial() {
-  if (P.floor === 25 || P.floor === 50 || P.floor === 75) {
-    var bosses = {
-      25: [{name:'石像鬼领主', hp:12, atk:5, gold:50}],
-      50: [{name:'炎魔', hp:22, atk:8, gold:80}],
-      75: [{name:'虚空之龙', hp:35, atk:12, gold:120}]
-    };
-    var b = pick(bosses[P.floor]);
-    P.log = ['第' + P.floor + '层——BOSS战！' + b.name + '出现了！'];
-    P.log = P.log.concat(fight(b));
-    if (P.hp > 0) { P.gold += b.gold; P.log.push(b.name + '被击败！获得' + b.gold + '金币'); }
-    return;
-  }
-  if (P.floor === 96) {
-    P.mazeChoices = [
-      {text: 'A. 左转', result: 'correct', msg: '你找到了正确的路！'},
-      {text: 'B. 右转', result: 'wrong', msg: '你绕回了原地', dmg: 2},
-      {text: 'C. 直走', result: 'wrong', msg: '陷阱！尖刺弹出', dmg: 3},
-      {text: 'D. 回头', result: 'wrong', msg: '撞上了墙', dmg: 1}
-    ];
-    P.showingMaze = true;
-    P.log = ['第96层：无尽迷宫——选择方向...'];
-    return;
-  }
-  if (P.floor === 97) {
-    var d = rnd(3, 7);
-    P.hp -= d;
-    P.log = ['第97层：死亡机关！受到' + d + '点伤害'];
-    return;
-  }
-  if (P.floor === 98) {
-    P.log = ['第98层——魔龙·焚世者盘踞于此！'];
-    P.log = P.log.concat(fight({name:'魔龙·焚世者', hp:45, atk:15, gold:200}));
-    if (P.hp > 0) { P.gold += 200; P.log.push('魔龙被击败！获得200金币'); }
-    return;
-  }
-  if (P.floor === 99) {
-    var qs = [
-      {q: '什么东西越洗越脏？', a: '水'},
-      {q: '什么东西打破了所有人都叫好？', a: '记录'},
-      {q: '什么东西借了不用还？', a: '光'}
-    ];
-    P.riddle = pick(qs);
-    P.showingRiddle = true;
-    P.log = ['第99层：知识恶魔——"回答我：' + P.riddle.q + '"'];
-    return;
-  }
-  if (P.floor === 100) {
-    P.fakeEndChoices = [
-      {label: 'A. "我已胜利！"', result: 'death', msg: '魔王大笑着将你碾碎...你死了。'},
-      {label: 'B. "这不是终点。"', result: 'continue', msg: '魔王的面具碎裂，露出了通往101层的阶梯...'}
-    ];
-    P.showingFakeEnd = true;
-    P.log = ['第100层：魔王端坐在王座上——"你已到达塔顶，如何选择？"'];
-    return;
-  }
-  if (P.floor === 101) {
-    P.log = ['第101层——虚空之主在黑暗中等待...'];
-    P.log = P.log.concat(fight({name:'真·魔王·虚空之主', hp:70, atk:20, gold:500}));
-    if (P.hp > 0) { P.gold += 500; P.log.push('你成为了新的传说！'); }
-    return;
-  }
-}
-
-// ─── 商店/迷宫/谜题/假结局 ───
-function buyShop(i) {
-  var item = P.shopItems[i];
-  if (!item || P.gold < item.cost) return;
-  P.gold -= item.cost;
-  if (item.effect === 'heal') P.hp = Math.min(P.maxHp, P.hp + (3 + Math.floor(P.floor/10)*2));
-  if (item.effect === 'atk') P.atk += (1 + Math.floor(P.floor/10));
-  if (item.effect === 'maxHp') P.maxHp += (2 + Math.floor(P.floor/10)*2);
-  P.showingShop = false;
-  P.floor++;
-  render();
-}
-function doMaze(i) {
-  var c = P.mazeChoices[i];
-  P.log = [c.msg];
-  if (c.dmg) { P.hp -= c.dmg; P.log.push('受到' + c.dmg + '点伤害'); }
-  P.showingMaze = false;
-  P.floor++;
-  render();
-}
-function doRiddle() {
-  var inp = $('riddle-in');
-  var ans = inp ? inp.value.trim() : '';
-  if (ans === P.riddle.a) {
-    P.log = ['知识恶魔点了点头——"你通过了。"'];
-    P.atk += 3; P.hp += 5;
-    P.log.push('获得：攻击+3，生命+5');
-  } else {
-    P.log = ['知识恶魔摇了摇头——"愚蠢。"'];
-    P.hp -= 5;
-    P.log.push('受到5点伤害');
-  }
-  P.showingRiddle = false;
-  P.floor++;
-  render();
-}
-function doFakeEnd(i) {
-  var c = P.fakeEndChoices[i];
-  P.log = [c.msg];
-  if (c.result === 'death') { P.hp = 0; }
-  else { P.floor = 101; }
-  P.showingFakeEnd = false;
-  render();
-}
-
-// ─── 开始游戏 ───
 function startGame() {
-  P.floor = 1; P.hp = 5; P.maxHp = 5; P.atk = 1; P.gold = 0;
-  P.treasures = []; P.log = ['你踏入了百层塔...'];
-  P.towerOutside = false; P.outsideSteps = 0; P.outsideMax = 0;
-  P.showingShop = false; P.showingMaze = false; P.showingRiddle = false; P.showingFakeEnd = false;
-  P.deaths = 0; P.weather = '晴朗';
+  P.floor=1;P.hp=5;P.maxHp=5;P.atk=1;P.gold=0;
+  P.treasures=[];P.log=['你踏入了百层塔...'];
+  P.towerOutside=false;P.showingShop=false;P.showingMaze=false;P.showingRiddle=false;P.showingFakeEnd=false;
+  P.deaths=0;
   render();
 }
 
-// 页面加载
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', function() { startGame(); });
-} else {
-  startGame();
-}
-console.log('[百层塔 v3.0] 完整版加载完成——一场景四应对 + 70小怪 + 10事件模板');
+if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){startGame();});}else{startGame();}
+console.log('[百层塔 v3.1] 290独立场景 + 70小怪 + 难度分级加载完成');
 
 </script>
 </body>
