@@ -405,46 +405,6 @@ function doEvent(e) {
 
 // ─── 旧doChoice保留兼容 ───
 function doChoice(c) { doEvent(c); }
-  P.log = [];
-  switch(c.type) {
-    case 'reward':
-      var g = rnd(10, 30) + P.floor;
-      P.gold += g;
-      P.log = ['金光中你获得了' + g + '金币！'];
-      break;
-    case 'shop':
-      var tier = P.floor < 30 ? 1 : P.floor < 60 ? 2 : P.floor < 90 ? 3 : 4;
-      P.shopItems = [
-        {name: '生命药水', cost: 10 + tier*5, desc: '恢复' + (3+tier*2) + '生命', effect: 'heal'},
-        {name: '攻击卷轴', cost: 15 + tier*5, desc: '攻击+' + (1+tier), effect: 'atk'},
-        {name: '护盾符文', cost: 12 + tier*5, desc: '生命上限+' + (2+tier*2), effect: 'maxHp'}
-      ];
-      P.showingShop = true;
-      render();
-      return;
-    case 'danger':
-      if (Math.random() < 0.7) {
-        var m = getMon();
-        P.log = fight(m);
-      } else {
-        var d = rnd(2, 5);
-        P.hp -= d;
-        P.log = ['陷阱触发！受到' + d + '点伤害'];
-      }
-      break;
-    case 'outside':
-      P.towerOutside = true;
-      P.outsideSteps = 0;
-      P.outsideMax = rnd(6, 20);
-      P.log = ['你翻出窗外，抓住了藤蔓...塔外世界在你面前展开。'];
-      break;
-    case 'mystery':
-      var roll = Math.random();
-      if (roll < 0.3) { P.gold += rnd(10, 30); P.log = ['铁门后藏着一堆金币！']; }
-      else if (roll < 0.6) { P.log = ['铁门后空空如也...']; }
-      else { P.hp -= 2; P.log = ['铁门后窜出一只怪物！受到2点伤害']; }
-      break;
-  }
   
   // 塔外处理
   if (P.towerOutside) {
